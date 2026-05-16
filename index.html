@@ -540,7 +540,7 @@ let nextId=Math.max(...data.map(d=>d.id))+1;
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
-let fbReady=false;
+let fbReady=false,_fbUnsub=null,_fbRetry=null;
 const FB_CONFIG={
   apiKey:"AIzaSyD4de2BdUFmVEEnigAKJQxCTEINMCJyeH0",
   authDomain:"billing-wifi-1ef52.firebaseapp.com",
@@ -555,16 +555,22 @@ function setSyncStatus(s,msg){
   const sm=document.getElementById('sync-msg');
   const c={ok:'#4ade80',syncing:'#fbbf24',err:'#f87171',off:'rgba(255,255,255,.35)'};
   dot.style.background=c[s]||c.off;
-  if(msg){bar.className='sync-bar show';sm.textContent=msg;if(s==='ok')setTimeout(()=>{bar.className='sync-bar';},2500);}
+  if(msg){bar.className='sync-bar show';sm.textContent=msg;if(s==='ok')setTimeout(()=>{bar.className='sync-bar';},3000);}
   else bar.className='sync-bar';
 }
-function initFirebase(){
+function scheduleRetry(){
+  if(_fbRetry)clearTimeout(_fbRetry);
+  _fbRetry=setTimeout(()=>{if(!fbReady)connectFirestore();},5000);
+}
+function connectFirestore(){
   try{
-    if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
     const fs=firebase.firestore();
+    if(_fbUnsub){_fbUnsub();_fbUnsub=null;}
     const docRef=fs.doc('bwifi/main');
     window._docRef=docRef;
-    docRef.onSnapshot(snap=>{
+    setSyncStatus('syncing','Menyambung ke cloud...');
+    _fbUnsub=docRef.onSnapshot(snap=>{
+      if(_fbRetry){clearTimeout(_fbRetry);_fbRetry=null;}
       if(!snap.exists){
         docRef.set({data:data,rekening:rekening,waTemplate:waTemplate});
         fbReady=true;setSyncStatus('ok','Terhubung ✓');return;
@@ -579,17 +585,40 @@ function initFirebase(){
       if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
       if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
       fbReady=true;setSyncStatus('ok','Tersinkron ✓');
-    },()=>{setSyncStatus('err','Offline - data lokal');fbReady=false;});
-  }catch(e){setSyncStatus('off',null);fbReady=false;}
+    },err=>{
+      setSyncStatus('err','Offline — mencoba ulang...');
+      fbReady=false;scheduleRetry();
+    });
+  }catch(e){
+    setSyncStatus('err','Gagal — mencoba ulang...');
+    fbReady=false;scheduleRetry();
+  }
+}
+function initFirebase(){
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
+    firebase.firestore().enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    connectFirestore();
+    window.addEventListener('online',()=>{
+      setSyncStatus('syncing','Internet tersambung, sinkronisasi...');
+      if(!fbReady)connectFirestore();
+    });
+    window.addEventListener('offline',()=>{
+      setSyncStatus('err','Tidak ada internet');fbReady=false;
+    });
+  }catch(e){
+    setSyncStatus('err','Gagal inisialisasi Firebase');scheduleRetry();
+  }
 }
 
 /* ===== HELPERS ===== */
 function save(){
   localStorage.setItem('bwifi_data',JSON.stringify(data));
-  if(fbReady&&window._docRef){
+  if(window._docRef){
     setSyncStatus('syncing','Menyimpan...');
     window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate})
-      .then(()=>setSyncStatus('ok','Tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync'));
+      .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
+      .catch(()=>{setSyncStatus('err','Gagal simpan — coba lagi');if(!fbReady)scheduleRetry();});
   }
 }
 function fRp(n){return'Rp '+Number(n).toLocaleString('id-ID')}
