@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#0F6E56"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Billing WiFi"/>
+<title>Billing WiFi</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --green:#1D9E75;--green-l:#EAF3DE;--green-d:#085041;--green-m:#C0DD97;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;--amber-m:#FAC775;
+  --red:#A32D2D;--red-l:#FCEBEB;--red-d:#791F1F;--red-m:#F7C1C1;
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#0C447C;--blue-m:#B5D4F4;
+  --purple:#534AB7;--purple-l:#EEEDFE;--purple-d:#26215C;--purple-m:#AFA9EC;
+  --bg:#F4F6F5;--card:#fff;--border:#e2e8e6;--text:#1a2e28;--muted:#6b8880;
+  --radius:12px;--radius-sm:8px;--font:'Plus Jakarta Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);font-family:var(--font);color:var(--text);font-size:14px;overscroll-behavior:none;min-height:100vh}
+body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
+.topbar{background:#0F6E56;color:#fff;padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{display:flex;align-items:center;gap:8px}
+.topbar-title i{font-size:22px}
+.topbar h1{font-size:17px;font-weight:600}
+.topbar-sub{font-size:11px;opacity:.75;margin-top:1px}
+.topbar-btns{display:flex;align-items:center;gap:6px}
+.topbar-btn{background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px}
+.topbar-btn:active{background:rgba(255,255,255,.35)}
+#sync-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s}
+.sync-bar{background:#085041;padding:5px 16px;font-size:11px;color:rgba(255,255,255,.9);display:none;align-items:center;gap:6px}
+.sync-bar.show{display:flex}
+.hero{background:#0F6E56;padding:0 16px 16px;color:#fff}
+.hero-label{font-size:11px;opacity:.75;margin-bottom:3px}
+.hero-saldo{font-size:26px;font-weight:600;letter-spacing:-.5px}
+.hero-row{display:flex;gap:7px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+.hero-chip{background:rgba(255,255,255,.15);border-radius:var(--radius-sm);padding:7px 10px;flex:0 0 auto;min-width:78px}
+.hero-chip .lbl{font-size:9px;opacity:.8;margin-bottom:2px}
+.hero-chip .val{font-size:12px;font-weight:600;white-space:nowrap}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 16px 0}
+.sc{background:var(--card);border-radius:var(--radius-sm);padding:9px 6px;text-align:center;border:1px solid var(--border);cursor:pointer}
+.sc .lbl{font-size:9px;color:var(--muted);margin-bottom:2px}
+.sc .val{font-size:17px;font-weight:600}
+.vg{color:var(--green)}.va{color:var(--amber)}.vr{color:var(--red)}.vb{color:var(--blue)}.vp{color:var(--purple)}
+.notif{margin:10px 16px 0;background:var(--amber-l);border:1px solid var(--amber-m);border-radius:var(--radius-sm);padding:10px 12px;display:none;align-items:flex-start;gap:8px}
+.notif.show{display:flex}
+.notif i{color:var(--amber);font-size:16px;flex-shrink:0;margin-top:1px}
+.notif-title{font-size:12px;font-weight:600;color:var(--amber-d);margin-bottom:3px}
+.notif-item{font-size:11px;color:var(--amber);line-height:1.6}
+.rek-wrap{margin:10px 16px 0}
+.rek-box{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:var(--radius);padding:12px 14px}
+.rek-box-title{font-size:12px;font-weight:600;color:var(--blue-d);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.rek-edit-btn{background:rgba(24,95,165,.12);border:none;border-radius:6px;color:var(--blue-d);font-size:11px;font-weight:600;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:var(--font)}
+.rek-item{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(24,95,165,.12)}
+.rek-item:last-child{border-bottom:none;padding-bottom:0}
+.rek-left{display:flex;align-items:center;gap:8px}
+.rek-avatar{width:30px;height:30px;border-radius:50%;background:var(--blue-m);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue-d);flex-shrink:0}
+.rek-name{font-size:13px;font-weight:600;color:var(--blue-d)}
+.rek-norek{font-size:11px;color:var(--blue);margin-top:1px}
+.rek-copy{background:rgba(24,95,165,.12);border:none;border-radius:6px;color:var(--blue-d);font-size:11px;font-weight:600;padding:4px 9px;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:var(--font)}
+.rek-copy.copied{background:var(--green-l);color:var(--green-d)}
+.tabs{display:flex;margin:10px 16px 0;background:var(--card);border-radius:var(--radius-sm);padding:3px;gap:2px;border:1px solid var(--border)}
+.tab{flex:1;height:32px;border:none;background:none;border-radius:6px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font)}
+.tab.active{background:#0F6E56;color:#fff}
+.tab i{font-size:13px}
+.sub-menu{display:flex;gap:6px;margin:10px 16px 0;overflow-x:auto;padding-bottom:2px}
+.sub-menu::-webkit-scrollbar{display:none}
+.smenu-btn{height:30px;padding:0 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);white-space:nowrap;font-family:var(--font);display:flex;align-items:center;gap:4px;flex-shrink:0}
+.smenu-btn.a-all{background:#0F6E56;color:#fff;border-color:#0F6E56}
+.smenu-btn.a-purple{background:var(--purple-l);color:var(--purple-d);border-color:var(--purple-m)}
+.smenu-btn.a-green{background:var(--green-l);color:var(--green-d);border-color:var(--green-m)}
+.smenu-btn.a-amber{background:var(--amber-l);color:var(--amber-d);border-color:var(--amber-m)}
+.smenu-btn.a-red{background:var(--red-l);color:var(--red-d);border-color:var(--red-m)}
+.toolbar{padding:8px 16px 0;display:flex;gap:6px}
+.toolbar input,.toolbar select{height:34px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:12px;font-family:var(--font);padding:0 10px;outline:none}
+.toolbar input{flex:1;min-width:0}
+.toolbar select{min-width:0;flex-shrink:0}
+.panel{display:none;padding:8px 16px 100px}
+.panel.show{display:block}
+.plg-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
+.plg-card.row-lunas{border-left:4px solid var(--green)}
+.plg-card.row-belum{border-left:4px solid var(--amber)}
+.plg-card.row-hutang{border-left:4px solid var(--red)}
+.plg-card.row-ropel{border-left:4px solid var(--blue)}
+.card-head{padding:10px 12px 7px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-nama{font-size:13px;font-weight:600}
+.card-hp{font-size:11px;color:var(--muted);margin-top:2px}
+.card-badges{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-lunas{background:var(--green-l);color:var(--green-d)}
+.b-belum{background:var(--amber-l);color:var(--amber-d)}
+.b-hutang{background:var(--red-l);color:var(--red-d)}
+.b-ropel{background:var(--blue-l);color:var(--blue-d)}
+.b-cash{background:#E1F5EE;color:#085041}
+.b-transfer{background:var(--blue-l);color:var(--blue-d)}
+.b-telat{background:var(--red-l);color:var(--red-d)}
+.b-kurang{background:var(--amber-l);color:var(--amber-d)}
+.b-baru{background:var(--purple-l);color:var(--purple-d)}
+.card-body{padding:0 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.card-field .lbl{font-size:10px;color:var(--muted)}
+.card-field .val{font-size:12px;font-weight:500;margin-top:1px}
+.card-addr{padding:0 12px 7px;font-size:11px;color:var(--muted);display:flex;align-items:flex-start;gap:5px}
+.card-catatan{padding:6px 12px 8px;background:#F8FAF9;border-top:1px solid var(--border);font-size:11px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;color:var(--muted)}
+.card-actions{padding:7px 12px;border-top:1px solid var(--border);display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.act-btn{height:30px;padding:0 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;gap:3px;font-family:var(--font)}
+.act-hapus{color:var(--red);border-color:var(--red-m)}
+.btn-wa{flex:1;height:30px;background:#25D366;color:#fff;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font)}
+.btn-telp{height:30px;width:36px;background:var(--green-l);color:var(--green-d);border:1px solid var(--green-m);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;text-decoration:none}
+.rekap-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:13px 14px;margin-bottom:10px}
+.rekap-head{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.rekap-head span{font-size:11px;color:var(--muted);font-weight:400}
+.rekap-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f4f2;font-size:12px}
+.rekap-row:last-of-type{border-bottom:none}
+.rekap-row .rl{color:var(--muted)}
+.rekap-row .rv{font-weight:500}
+.rekap-total{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px;font-weight:600}
+.rekap-total .rv{color:var(--red)}
+.analisa-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:12px 14px;margin-bottom:10px}
+.risiko-tinggi{border-left:4px solid var(--red)}
+.risiko-sedang{border-left:4px solid var(--amber)}
+.section-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;display:flex;align-items:center;gap:5px}
+.fab{position:fixed;bottom:78px;right:18px;width:48px;height:48px;border-radius:50%;background:#0F6E56;color:#fff;border:none;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50}
+.fab:active{background:#085041}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:40;padding:4px 0 env(safe-area-inset-bottom,4px)}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;border:none;background:none;color:var(--muted);font-size:9px;font-family:var(--font)}
+.bnav-item i{font-size:19px}
+.bnav-item.active{color:#0F6E56;font-weight:600}
+.export-btn{width:auto;height:34px;padding:0 12px;background:var(--green-l);color:var(--green-d);border:1px solid var(--green-m);border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:5px;flex-shrink:0}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
+.overlay.show{display:flex}
+.sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-height:94vh;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom,16px)}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.sheet-head{padding:13px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sheet-head h2{font-size:15px;font-weight:600}
+.sheet-close{width:30px;height:30px;border:none;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--muted)}
+.sheet-body{padding:14px 16px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--font);padding:0 12px;outline:none}
+.fg textarea{height:90px;padding:10px 12px;resize:none;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#0F6E56}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg-hint{font-size:10px;color:var(--muted);margin-top:3px}
+.btn-simpan{width:100%;height:46px;background:#0F6E56;color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-simpan:active{background:#085041}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0 10px}
+.empty{text-align:center;padding:32px 20px;color:var(--muted)}
+.empty i{font-size:40px;opacity:.3;display:block;margin-bottom:8px}
+.empty p{font-size:12px}
+.btn-bayar{flex:1;height:30px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font);letter-spacing:.2px}
+.btn-bayar:active{background:var(--green-d)}
+.btn-bayar.lunas{background:#d1fae5;color:var(--green-d);border:1px solid var(--green-m);cursor:default}
+.btn-batal{height:30px;padding:0 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--amber-m);background:var(--amber-l);color:var(--amber-d);display:flex;align-items:center;gap:3px;font-family:var(--font)}
+.btn-batal:active{background:var(--amber-m)}
+/* QUICK-PAY POPUP */
+.qpay-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:flex-end}
+.qpay-overlay.show{display:flex}
+.qpay-sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;padding:0 0 env(safe-area-inset-bottom,20px)}
+.qpay-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto}
+.qpay-body{padding:0 20px 20px}
+.qpay-nama{font-size:16px;font-weight:700;margin-bottom:2px}
+.qpay-tagihan{font-size:22px;font-weight:700;color:var(--green);margin-bottom:4px}
+.qpay-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+.qpay-via{display:flex;gap:8px;margin-bottom:16px}
+.qpay-via-btn{flex:1;height:48px;border-radius:var(--radius);border:2px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:border-color .15s,background .15s}
+.qpay-via-btn.selected{border-color:var(--green);background:var(--green-l);color:var(--green-d)}
+.qpay-tgl{margin-bottom:16px}
+.qpay-tgl label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.qpay-tgl input{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--font);padding:0 12px;outline:none}
+.qpay-tgl input:focus{border-color:var(--green)}
+.btn-konfirmasi{width:100%;height:50px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-konfirmasi:active{background:var(--green-d)}
+.jt-warn{color:var(--red);font-weight:600}
+.jt-near{color:var(--amber);font-weight:600}
+.info-box{border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;margin-bottom:12px}
+.info-box.amber{background:var(--amber-l);border:1px solid var(--amber-m);color:var(--amber-d)}
+.info-box.green{background:var(--green-l);border:1px solid var(--green-m);color:var(--green-d)}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#0e1a17;--card:#162320;--border:#243d38;--text:#e8f0ee;--muted:#7aada0}
+  .topbar,.hero,.sync-bar{background:#085041}
+  .tab.active,.fab,.btn-simpan{background:#085041}
+  .fg input,.fg select,.fg textarea{background:#0e1a17;color:var(--text)}
+  .card-catatan{background:#0e1a17}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">
+    <i class="ti ti-wifi"></i>
+    <div><h1>Billing WiFi</h1><div class="topbar-sub">Kelola tagihan pelanggan</div></div>
+  </div>
+  <div class="topbar-btns">
+    <div id="sync-dot" title="Status sync"></div>
+    <button class="topbar-btn" onclick="exportExcel()" aria-label="Export Excel"><i class="ti ti-file-spreadsheet"></i></button>
+    <button class="topbar-btn" onclick="bukaModal()" aria-label="Tambah"><i class="ti ti-plus"></i></button>
+  </div>
+</div>
+<div class="sync-bar" id="sync-bar"><i class="ti ti-cloud-upload" style="font-size:13px"></i><span id="sync-msg">Menyambung...</span></div>
+
+<div class="hero">
+  <div class="hero-label">Total saldo keseluruhan</div>
+  <div class="hero-saldo" id="hero-saldo">Rp 0</div>
+  <div class="hero-row">
+    <div class="hero-chip"><div class="lbl">Masuk</div><div class="val" id="h-masuk">Rp 0</div></div>
+    <div class="hero-chip"><div class="lbl">Cash</div><div class="val" id="h-cash">Rp 0</div></div>
+    <div class="hero-chip"><div class="lbl">Transfer</div><div class="val" id="h-transfer">Rp 0</div></div>
+    <div class="hero-chip"><div class="lbl">Nunggak</div><div class="val" id="h-nunggak" style="color:#FAC775">Rp 0</div></div>
+    <div class="hero-chip"><div class="lbl">Pelanggan</div><div class="val" id="h-total">0</div></div>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="sc" onclick="filterStat('lunas')"><div class="lbl">Lunas</div><div class="val vg" id="jml-lunas">0</div></div>
+  <div class="sc" onclick="filterStat('belum')"><div class="lbl">Belum</div><div class="val va" id="jml-belum">0</div></div>
+  <div class="sc" onclick="filterStat('hutang')"><div class="lbl">Hutang</div><div class="val vr" id="jml-hutang">0</div></div>
+  <div class="sc" onclick="filterStat('ropel')"><div class="lbl">Ropel</div><div class="val vb" id="jml-ropel">0</div></div>
+</div>
+
+<div class="notif" id="notif-bar">
+  <i class="ti ti-bell"></i>
+  <div><div class="notif-title">Peringatan Jatuh Tempo</div><div id="notif-items"></div></div>
+</div>
+
+<div class="rek-wrap">
+  <div class="rek-box">
+    <div class="rek-box-title">
+      <span><i class="ti ti-building-bank" style="font-size:14px;margin-right:4px"></i>Info Rekening Transfer</span>
+      <button class="rek-edit-btn" onclick="bukaRekeningEdit()"><i class="ti ti-edit" style="font-size:11px"></i> Edit</button>
+    </div>
+    <div id="rek-list"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-data" onclick="switchTab('data')"><i class="ti ti-users"></i> Pelanggan</button>
+  <button class="tab" id="tab-rekap" onclick="switchTab('rekap')"><i class="ti ti-chart-bar"></i> Rekap</button>
+  <button class="tab" id="tab-analisa" onclick="switchTab('analisa')"><i class="ti ti-alert-triangle"></i> Analisa</button>
+</div>
+
+<div class="panel show" id="panel-data">
+  <div class="sub-menu">
+    <button class="smenu-btn a-all" id="sm-semua" onclick="setSubMenu('semua','a-all')"><i class="ti ti-list"></i> Semua</button>
+    <button class="smenu-btn" id="sm-baru" onclick="setSubMenu('baru','a-purple')"><i class="ti ti-sparkles"></i> Pelanggan Baru</button>
+    <button class="smenu-btn" id="sm-lunas" onclick="setSubMenu('lunas','a-green')"><i class="ti ti-check"></i> Lunas</button>
+    <button class="smenu-btn" id="sm-belum" onclick="setSubMenu('belum','a-amber')"><i class="ti ti-clock"></i> Belum Bayar</button>
+    <button class="smenu-btn" id="sm-hutang" onclick="setSubMenu('hutang','a-red')"><i class="ti ti-alert-circle"></i> Hutang</button>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="cari" placeholder="Cari nama, HP, alamat..." oninput="renderData()"/>
+    <select id="fs" onchange="renderData()">
+      <option value="">Semua bulan</option>
+      <option value="2026-03">Mar 2026</option>
+      <option value="2026-04">Apr 2026</option>
+      <option value="2026-05">Mei 2026</option>
+    </select>
+  </div>
+  <div id="list-container" style="margin-top:8px"></div>
+</div>
+
+<div class="panel" id="panel-rekap">
+  <div class="toolbar" style="padding-left:0;padding-right:0;margin-bottom:6px">
+    <select id="rekap-tahun" onchange="renderRekap()" style="flex:1">
+      <option value="2026">2026</option><option value="2025">2025</option>
+    </select>
+    <button class="export-btn" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
+  </div>
+  <div id="rekap-container"></div>
+</div>
+
+<div class="panel" id="panel-analisa">
+  <div class="info-box amber" style="margin-top:0">
+    <strong style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:12px"><i class="ti ti-info-circle"></i> Analisa 3 Bulan Terakhir</strong>
+    <span style="font-size:11px">Pelanggan yang sering bayar telat atau hutang dihitung dari riwayat pembayaran.</span>
+  </div>
+  <div id="analisa-container"></div>
+</div>
+
+<button class="fab" onclick="bukaModal()" aria-label="Tambah pelanggan"><i class="ti ti-plus"></i></button>
+
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="bn-data" onclick="switchTab('data')"><i class="ti ti-users"></i>Pelanggan</button>
+  <button class="bnav-item" id="bn-rekap" onclick="switchTab('rekap')"><i class="ti ti-chart-bar"></i>Rekap</button>
+  <button class="bnav-item" id="bn-analisa" onclick="switchTab('analisa')"><i class="ti ti-alert-triangle"></i>Analisa</button>
+</nav>
+
+<!-- MODAL PELANGGAN -->
+<div class="overlay" id="overlay" onclick="cekOverlay(event,'overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="sheet-judul">Tambah Pelanggan</h2>
+      <button class="sheet-close" onclick="tutup('overlay')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="fg"><label>Nama Lengkap</label><input type="text" id="f-nama" placeholder="Budi Santoso"/></div>
+      <div class="fg-row">
+        <div class="fg"><label>Nomor HP</label><input type="text" id="f-hp" placeholder="0812-xxxx"/></div>
+        <div class="fg"><label>Tagihan (Rp)</label><input type="number" id="f-tagihan" placeholder="150000" min="0"/></div>
+      </div>
+      <div class="fg"><label>Alamat</label><input type="text" id="f-alamat" placeholder="Jl. Merdeka No. 10"/></div>
+      <div class="fg-row">
+        <div class="fg"><label>Status</label>
+          <select id="f-status">
+            <option value="lunas">✅ Lunas</option>
+            <option value="belum">⏳ Belum Bayar</option>
+            <option value="hutang">🔴 Hutang</option>
+            <option value="ropel">🔁 Bayar Ropel</option>
+          </select>
+        </div>
+        <div class="fg"><label>Bayar Via</label>
+          <select id="f-via"><option value="cash">💵 Cash</option><option value="transfer">🏦 Transfer</option></select>
+        </div>
+      </div>
+      <div class="fg"><label>Jumlah Dibayar (Rp)</label><input type="number" id="f-dibayar" placeholder="Kosongkan jika sama dengan tagihan" min="0"/><div class="fg-hint">Isi jika bayar kurang dari tagihan</div></div>
+      <div class="fg-row">
+        <div class="fg"><label>Jatuh Tempo</label><input type="date" id="f-jatuh-tempo"/><div class="fg-hint">Batas waktu bayar</div></div>
+        <div class="fg"><label>Tanggal Bayar</label><input type="date" id="f-tgl"/></div>
+      </div>
+      <div class="fg"><label>Catatan</label><textarea id="f-catatan" placeholder="Contoh: bayar separuh dulu..."></textarea></div>
+      <button class="btn-simpan" onclick="simpan()"><i class="ti ti-check"></i> Simpan Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REKENING -->
+<div class="overlay" id="overlay-rek" onclick="cekOverlay(event,'overlay-rek')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Edit Rekening & Pesan WA</h2>
+      <button class="sheet-close" onclick="tutup('overlay-rek')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="section-lbl" style="color:var(--blue-d);margin-top:0"><i class="ti ti-credit-card"></i> Rekening 1</div>
+      <div class="fg-row">
+        <div class="fg"><label>Nama Pemilik</label><input type="text" id="rek1-nama" placeholder="Miun"/></div>
+        <div class="fg"><label>Bank / E-Wallet</label><input type="text" id="rek1-bank" placeholder="BRI"/></div>
+      </div>
+      <div class="fg"><label>Nomor Rekening / Akun</label><input type="text" id="rek1-norek" placeholder="1234-5678-9012-3456"/></div>
+      <hr class="divider"/>
+      <div class="section-lbl" style="color:var(--blue-d)"><i class="ti ti-credit-card"></i> Rekening 2</div>
+      <div class="fg-row">
+        <div class="fg"><label>Nama Pemilik</label><input type="text" id="rek2-nama" placeholder="Muhlidin"/></div>
+        <div class="fg"><label>Bank / E-Wallet</label><input type="text" id="rek2-bank" placeholder="BNI"/></div>
+      </div>
+      <div class="fg"><label>Nomor Rekening / Akun</label><input type="text" id="rek2-norek" placeholder="9876-5432-1098-7654"/></div>
+      <hr class="divider"/>
+      <div class="section-lbl" style="color:var(--blue-d)"><i class="ti ti-credit-card"></i> Rekening 3</div>
+      <div class="fg-row">
+        <div class="fg"><label>Nama Pemilik</label><input type="text" id="rek3-nama" placeholder="Tripay"/></div>
+        <div class="fg"><label>Bank / E-Wallet</label><input type="text" id="rek3-bank" placeholder="E-Wallet"/></div>
+      </div>
+      <div class="fg"><label>Nomor Rekening / Akun</label><input type="text" id="rek3-norek" placeholder="tripay@miun"/></div>
+      <hr class="divider"/>
+      <div class="section-lbl"><i class="ti ti-brand-whatsapp"></i> Template Pesan WhatsApp</div>
+      <div class="fg">
+        <label>Isi Pesan (bisa dikustomisasi)</label>
+        <textarea id="wa-template" style="height:120px"></textarea>
+        <div class="fg-hint">Variabel: <b>{nama}</b> = nama pelanggan &nbsp;|&nbsp; <b>{tagihan}</b> = nominal &nbsp;|&nbsp; <b>{bulan}</b> = bulan &nbsp;|&nbsp; <b>{rekening}</b> = info rekening</div>
+      </div>
+      <div class="info-box green">
+        <strong>Contoh:</strong> Halo {nama}, tagihan WiFi bulan {bulan} sebesar {tagihan} belum kami terima. Mohon transfer ke: {rekening}. Terima kasih 🙏
+      </div>
+      <button class="btn-simpan" onclick="simpanRekening()"><i class="ti ti-check"></i> Simpan Rekening & Pesan WA</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL QUICK-PAY -->
+<div class="qpay-overlay" id="qpay-overlay" onclick="qpayOverlayClick(event)">
+  <div class="qpay-sheet">
+    <div class="qpay-handle"></div>
+    <div class="qpay-body">
+      <div class="qpay-nama" id="qp-nama">—</div>
+      <div class="qpay-tagihan" id="qp-tagihan">Rp 0</div>
+      <div class="qpay-sub">Konfirmasi pembayaran pelanggan ini</div>
+      <div class="qpay-via">
+        <button class="qpay-via-btn selected" id="qp-cash" onclick="pilihVia('cash')">💵 Cash</button>
+        <button class="qpay-via-btn" id="qp-transfer" onclick="pilihVia('transfer')">🏦 Transfer</button>
+      </div>
+      <div class="qpay-tgl">
+        <label>Tanggal Bayar</label>
+        <input type="date" id="qp-tgl"/>
+      </div>
+      <button class="btn-konfirmasi" onclick="konfirmasiBayar()"><i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Lunas</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+
+let rekening=JSON.parse(localStorage.getItem('bwifi_rek')||'null')||[
+  {nama:'Miun',bank:'BRI',norek:'Isi nomor rekening Miun'},
+  {nama:'Muhlidin',bank:'BNI',norek:'Isi nomor rekening Muhlidin'},
+  {nama:'Tripay',bank:'E-Wallet',norek:'Isi akun Tripay'},
+];
+let waTemplate=localStorage.getItem('bwifi_watemplate')||'Halo *{nama}*, tagihan WiFi bulan *{bulan}* sebesar *{tagihan}* belum kami terima.\n\nMohon segera lakukan pembayaran. Bisa transfer ke:\n{rekening}\n\nTerima kasih 🙏';
+
+let data=JSON.parse(localStorage.getItem('bwifi_data')||'null')||[
+  {id:101,nama:'Nazila',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:102,nama:'Toipah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:103,nama:'Ismail',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:104,nama:'Iqbal',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:105,nama:'Sutrisno',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:106,nama:'Sarah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:107,nama:'Heru',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:108,nama:'Dewi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:109,nama:'Fadilah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:110,nama:'Indra/Ismunawati',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:111,nama:'Muyasaroh',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:112,nama:'Uswatun',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:113,nama:'Wahyu',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:114,nama:'Mutsalin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:115,nama:'Sri Sumarni',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:116,nama:'Barozi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:117,nama:'Haniyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:118,nama:'Musiyam',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:119,nama:'Wiwin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:120,nama:'Sambari',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:121,nama:'Dina Akmalia',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:122,nama:'Aripah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:123,nama:'Kawidi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:124,nama:'Nauma',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:125,nama:'Maratusolihah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:126,nama:'Ahlunizar',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:127,nama:'Saiful Ulum',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:128,nama:'Pipit Kustiyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:129,nama:'Atikah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:130,nama:'Adu Dwi Sulistyo',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:131,nama:'Lutfiyatin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:132,nama:'Kasih',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:133,nama:'Rohim',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:134,nama:'Yusliha',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:135,nama:'Rizal Aini',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:136,nama:'Muningsih',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:137,nama:'Khamami',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:138,nama:'Suliyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:139,nama:'Eko',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:140,nama:'Darwanti',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:141,nama:'Yuli',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:142,nama:'Uswatun (2)',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:143,nama:'Suli',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:144,nama:'Titah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:145,nama:'Istiqomah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:146,nama:'Istilah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:147,nama:'Festi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:148,nama:'Wiyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:149,nama:'Yaman',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:150,nama:'Yuraeroh',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:151,nama:'Salapudin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:152,nama:'Fadilah (2)',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:153,nama:'Faturohman',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:154,nama:'Pak Lurah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:155,nama:'Umam',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:156,nama:'Khoiri',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:157,nama:'Khusnani',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:158,nama:'Roilta',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:159,nama:'Dasto',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:160,nama:'Daenuri',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:161,nama:'Nafilah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:162,nama:'Listianah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:163,nama:'Mus\'ap',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:164,nama:'Fajar',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:165,nama:'Ilmi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:166,nama:'Nurul Abadiyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:167,nama:'Indayah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:168,nama:'Miatin Agustina',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:169,nama:'Zumaroh',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:170,nama:'Daryuti',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:171,nama:'Ridho',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:172,nama:'Imam W',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:173,nama:'Ramadhan',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:174,nama:'Muksodah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:175,nama:'Malehatun',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:176,nama:'Kumasih',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:177,nama:'Karto',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:178,nama:'Tina',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:179,nama:'Teguh',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:180,nama:'Ari Agustina',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:181,nama:'Dafit',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:182,nama:'Sopiyah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:183,nama:'Budi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:184,nama:'Dewi Putri Bekti',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:185,nama:'Nasiyatin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:186,nama:'Aliman',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:187,nama:'Daryanto',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:188,nama:'Elisa Febriyanti',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:189,nama:'Ernawati',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:190,nama:'Sigit',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:191,nama:'Ipit',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:192,nama:'Roaenah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:193,nama:'Anisah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:194,nama:'Tugio',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:195,nama:'Wahidi',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:196,nama:'Puji Setiono',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:197,nama:'Muntatik',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:198,nama:'Irpan',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:199,nama:'Slamet Mufid',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:200,nama:'Hamdam',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:201,nama:'Samsudin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:202,nama:'Masroh',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:203,nama:'P. Supratman',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:204,nama:'Ulfa',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:205,nama:'Musiyam (2)',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:206,nama:'Supikri',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:207,nama:'Slamet Sodiqin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:208,nama:'Royhanti',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:209,nama:'Indah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:210,nama:'Nur Khamidah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:211,nama:'Yono',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:212,nama:'Indah (2)',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:213,nama:'Fitri',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:1,nama:'Susi',hp:'',alamat:'Wonomerto Klesem',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:2,nama:'Iqbal',hp:'',alamat:'Wonomerto Klesem',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:3,nama:'Aminsoeli',hp:'',alamat:'Wonomerto',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:4,nama:'Subhan',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:5,nama:'Kandang',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:6,nama:'Andriyanto',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:7,nama:'Wiwin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:8,nama:'Musiyam',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:9,nama:'Muningsih',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:10,nama:'Imam W',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:11,nama:'Winarso',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:12,nama:'Dafit Irawan',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:13,nama:'Mursalin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+];
+let nextId=Math.max(...data.map(d=>d.id))+1;
+let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
+
+/* ===== FIREBASE ===== */
+let db=null,dbRef=null,fbReady=false;
+const FB_CONFIG={
+  apiKey:"AIzaSyPLACEHOLDER",
+  authDomain:"billing-wifi-app.firebaseapp.com",
+  databaseURL:"https://billing-wifi-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"billing-wifi-app"
+};
+function setSyncStatus(s,msg){
+  const dot=document.getElementById('sync-dot');
+  const bar=document.getElementById('sync-bar');
+  const sm=document.getElementById('sync-msg');
+  const c={ok:'#4ade80',syncing:'#fbbf24',err:'#f87171',off:'rgba(255,255,255,.35)'};
+  dot.style.background=c[s]||c.off;
+  if(msg){bar.className='sync-bar show';sm.textContent=msg;if(s==='ok')setTimeout(()=>{bar.className='sync-bar';},2500);}
+  else bar.className='sync-bar';
+}
+function initFirebase(){
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
+    db=firebase.database();dbRef=db.ref('bwifi/data');
+    dbRef.on('value',snap=>{
+      const val=snap.val();
+      if(val){data=Object.values(val).sort((a,b)=>a.id-b.id);localStorage.setItem('bwifi_data',JSON.stringify(data));renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();setSyncStatus('ok','Tersinkron ✓');}
+      fbReady=true;
+    },()=>{setSyncStatus('err','Offline');fbReady=false;});
+    db.ref('.info/connected').on('value',snap=>setSyncStatus(snap.val()?'ok':'err',snap.val()?'Terhubung':'Terputus'));
+  }catch(e){setSyncStatus('off',null);fbReady=false;}
+}
+
+/* ===== HELPERS ===== */
+function save(){
+  localStorage.setItem('bwifi_data',JSON.stringify(data));
+  if(fbReady&&dbRef){
+    setSyncStatus('syncing','Menyimpan...');
+    const obj={};data.forEach(d=>{obj['id'+d.id]=d;});
+    dbRef.set(obj).then(()=>setSyncStatus('ok','Tersimpan ✓')).catch(e=>setSyncStatus('err','Gagal sync'));
+  }
+}
+function fRp(n){return'Rp '+Number(n).toLocaleString('id-ID')}
+function fTgl(t){if(!t)return'—';const[y,m,d]=t.split('-');return d+'/'+m+'/'+y}
+function parseTgl(t){return t?new Date(t):null}
+function initials(n){const p=n.split(' ');return(p[0][0]+(p.length>1?p[p.length-1][0]:p[0][1]||'')).toUpperCase();}
+function rekStr(){return rekening.filter(r=>r.norek).map(r=>`• ${r.bank} (${r.nama}): ${r.norek}`).join('\n');}
+
+function autoFlags(d){
+  const f=[];
+  const jt=parseTgl(d.jatuhTempo);const tb=parseTgl(d.tgl);
+  if(d.dibayar>0&&d.dibayar<d.tagihan)f.push({type:'kurang',msg:'Kurang '+fRp(d.tagihan-d.dibayar)});
+  if(jt&&tb&&tb>jt)f.push({type:'telat',msg:'Telat '+Math.round((tb-jt)/86400000)+' hari'});
+  else if(jt&&!d.tgl&&jt<TODAY)f.push({type:'telat',msg:'Lewat '+Math.round((TODAY-jt)/86400000)+' hari'});
+  return f;
+}
+
+/* REKENING */
+function renderRekening(){
+  document.getElementById('rek-list').innerHTML=rekening.filter(r=>r.norek).map(r=>`
+    <div class="rek-item">
+      <div class="rek-left">
+        <div class="rek-avatar">${initials(r.nama)}</div>
+        <div><div class="rek-name">${r.nama}</div><div class="rek-norek">${r.bank} · ${r.norek}</div></div>
+      </div>
+      <button class="rek-copy" onclick="copyRek(this,'${r.norek}')"><i class="ti ti-copy" style="font-size:11px"></i> Salin</button>
+    </div>`).join('');
+}
+
+/* RENDER DATA */
+function renderData(){
+  const cari=document.getElementById('cari').value.toLowerCase();
+  const fBulan=document.getElementById('fs').value;
+  const lbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+  const batas3=new Date(TODAY);batas3.setMonth(batas3.getMonth()-3);
+
+  let f=data.filter(d=>{
+    const ok=d.nama.toLowerCase().includes(cari)||(d.hp||'').includes(cari)||(d.alamat||'').toLowerCase().includes(cari);
+    const bm=!fBulan||((d.jatuhTempo&&d.jatuhTempo.startsWith(fBulan))||(d.tgl&&d.tgl.startsWith(fBulan)));
+    const ref=parseTgl(d.tgl||d.jatuhTempo);
+    const isBaru=ref&&ref>=batas3;
+    if(activeSubMenu==='baru')return ok&&bm&&isBaru;
+    if(activeSubMenu==='lunas')return ok&&bm&&d.status==='lunas';
+    if(activeSubMenu==='belum')return ok&&bm&&d.status==='belum';
+    if(activeSubMenu==='hutang')return ok&&bm&&d.status==='hutang';
+    return ok&&bm;
+  });
+
+  const c=document.getElementById('list-container');
+  if(!f.length){c.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Tidak ada data pelanggan</p></div>';updateStats();return;}
+
+  const batas3str=batas3.toISOString().slice(0,10);
+  c.innerHTML=f.map(d=>{
+    const flags=autoFlags(d);
+    const jt=parseTgl(d.jatuhTempo);
+    const hL=jt?Math.round((jt-TODAY)/86400000):null;
+    let jtH=fTgl(d.jatuhTempo);
+    if(d.jatuhTempo&&hL!==null){if(hL<0)jtH='<span class="jt-warn">'+fTgl(d.jatuhTempo)+'</span>';else if(hL<=3)jtH='<span class="jt-near">'+fTgl(d.jatuhTempo)+'</span>';}
+    const fb=flags.map(fl=>`<span class="badge b-${fl.type}">${fl.msg}</span>`).join('');
+    const hasCat=flags.length||d.catatan;
+    const ref=d.tgl||d.jatuhTempo||'';
+    const isBaru=ref>=batas3str;
+    const safeHp=(d.hp||'').replace(/'/g,'');
+    const safeNama=d.nama.replace(/'/g,'');
+    return`<div class="plg-card row-${d.status}">
+      <div class="card-head">
+        <div>
+          <div class="card-nama">${d.nama}${isBaru?'&nbsp;<span class="badge b-baru" style="font-size:9px">Baru</span>':''}</div>
+          <div class="card-hp"><i class="ti ti-phone" style="font-size:10px"></i> ${d.hp||'—'}</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge b-${d.status}">${lbl[d.status]}</span>
+          <span class="badge b-${d.via}">${d.via==='cash'?'Cash':'Transfer'}</span>
+        </div>
+      </div>
+      ${d.alamat?`<div class="card-addr"><i class="ti ti-map-pin"></i>${d.alamat}</div>`:''}
+      <div class="card-body">
+        <div class="card-field"><div class="lbl">Tagihan</div><div class="val">${fRp(d.tagihan)}</div></div>
+        <div class="card-field"><div class="lbl">Dibayar</div><div class="val">${d.dibayar>0?fRp(d.dibayar):'—'}</div></div>
+        <div class="card-field"><div class="lbl">Jatuh Tempo</div><div class="val">${jtH}</div></div>
+        <div class="card-field"><div class="lbl">Tgl Bayar</div><div class="val">${fTgl(d.tgl)}</div></div>
+      </div>
+      ${hasCat?`<div class="card-catatan"><i class="ti ti-notes" style="font-size:12px;flex-shrink:0"></i>${fb}${d.catatan?`<span>${d.catatan}</span>`:''}</div>`:''}
+      <div class="card-actions">
+        ${d.tagihan>0&&d.status!=='lunas'?`<button class="btn-bayar" onclick="bukaBayarCepat(${d.id})"><i class="ti ti-cash" style="font-size:14px"></i> ✓ Bayar</button>`:d.status==='lunas'?`<button class="btn-batal" onclick="batalLunas(${d.id})"><i class="ti ti-rotate-left" style="font-size:12px"></i> Batalkan</button>`:``}
+        ${d.hp?`<button class="btn-wa" onclick="kirimWA('${safeHp}','${safeNama}',${d.tagihan},'${d.jatuhTempo||''}')"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button>
+        <a class="btn-telp" href="tel:${(d.hp||'').replace(/[^0-9]/g,'')}"><i class="ti ti-phone" style="font-size:14px"></i></a>`:''}
+        <button class="act-btn" onclick="editData(${d.id})"><i class="ti ti-edit" style="font-size:12px"></i></button>
+        <button class="act-btn act-hapus" onclick="hapus(${d.id})"><i class="ti ti-trash" style="font-size:12px"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();updateNotif();
+}
+
+/* ANALISA */
+function renderAnalisa(){
+  const now=new Date();
+  const bulan3=[];
+  for(let i=2;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    bulan3.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  const profil={};
+  data.forEach(d=>{
+    const ref=d.tgl||d.jatuhTempo;if(!ref)return;
+    const bln=ref.slice(0,7);if(!bulan3.includes(bln))return;
+    const key=d.nama.trim().toLowerCase();
+    if(!profil[key])profil[key]={nama:d.nama,telat:0,hutang:0,total:0,bulanList:[]};
+    profil[key].total++;profil[key].bulanList.push(bln);
+    const jt=parseTgl(d.jatuhTempo);const tb=parseTgl(d.tgl);
+    if(jt&&tb&&tb>jt)profil[key].telat++;
+    if(jt&&!d.tgl&&jt<TODAY)profil[key].hutang++;
+    if(d.status==='hutang'||d.status==='belum')profil[key].hutang++;
+  });
+  const list=Object.values(profil).filter(p=>p.telat>0||p.hutang>0).sort((a,b)=>(b.telat+b.hutang*1.5)-(a.telat+a.hutang*1.5));
+  const tinggi=list.filter(p=>p.telat>=2||p.hutang>=2);
+  const sedang=list.filter(p=>p.telat<2&&p.hutang<2&&(p.telat>0||p.hutang>0));
+  let html='';
+  const blnLabel=b=>{const[y,m]=b.split('-');return BULAN[parseInt(m)-1]+' '+y;};
+  if(!list.length){
+    html='<div class="empty"><i class="ti ti-mood-happy"></i><p>Tidak ada pelanggan bermasalah dalam 3 bulan terakhir 🎉</p></div>';
+  }else{
+    if(tinggi.length){
+      html+=`<div class="section-lbl" style="color:var(--red);margin-top:0"><i class="ti ti-alert-circle"></i> Risiko Tinggi — ${tinggi.length} orang</div>`;
+      html+=tinggi.map(p=>`<div class="analisa-card risiko-tinggi">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600">${p.nama}</div>
+          <span style="background:var(--red-l);color:var(--red-d);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">⚠ Risiko Tinggi</span>
+        </div>
+        ${p.telat>0?`<div class="rekap-row"><span class="rl"><i class="ti ti-clock" style="font-size:12px"></i> Telat bayar</span><span class="rv" style="color:var(--red)">${p.telat}× dari ${p.total} bulan</span></div>`:''}
+        ${p.hutang>0?`<div class="rekap-row"><span class="rl"><i class="ti ti-alert-triangle" style="font-size:12px"></i> Hutang/belum bayar</span><span class="rv" style="color:var(--red)">${p.hutang}× dari ${p.total} bulan</span></div>`:''}
+        <div style="font-size:10px;color:var(--muted);margin-top:7px">Tercatat: ${[...new Set(p.bulanList)].map(blnLabel).join(', ')}</div>
+      </div>`).join('');
+    }
+    if(sedang.length){
+      html+=`<div class="section-lbl" style="color:var(--amber)"><i class="ti ti-alert-triangle"></i> Perlu Perhatian — ${sedang.length} orang</div>`;
+      html+=sedang.map(p=>`<div class="analisa-card risiko-sedang">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600">${p.nama}</div>
+          <span style="background:var(--amber-l);color:var(--amber-d);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">Perhatian</span>
+        </div>
+        ${p.telat>0?`<div class="rekap-row"><span class="rl">Telat bayar</span><span class="rv" style="color:var(--amber)">${p.telat}×</span></div>`:''}
+        ${p.hutang>0?`<div class="rekap-row"><span class="rl">Hutang/belum bayar</span><span class="rv" style="color:var(--amber)">${p.hutang}×</span></div>`:''}
+        <div style="font-size:10px;color:var(--muted);margin-top:7px">Tercatat: ${[...new Set(p.bulanList)].map(blnLabel).join(', ')}</div>
+      </div>`).join('');
+    }
+    html+=`<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">Data: ${bulan3.map(blnLabel).join(', ')}</div>`;
+  }
+  document.getElementById('analisa-container').innerHTML=html;
+}
+
+/* REKAP BULANAN */
+function renderRekap(){
+  const tahun=document.getElementById('rekap-tahun').value;
+  const bd={};for(let i=1;i<=12;i++)bd[i]={tagihan:0,masuk:0,cash:0,transfer:0,count:0,lunas:0,belum:0,hutang:0,ropel:0};
+  data.forEach(d=>{
+    const ref=d.tgl||d.jatuhTempo;if(!ref||!ref.startsWith(tahun))return;
+    const bln=parseInt(ref.split('-')[1]);
+    bd[bln].tagihan+=d.tagihan;bd[bln].masuk+=d.dibayar;bd[bln].count++;
+    bd[bln][d.via]+=d.dibayar;bd[bln][d.status]++;
+  });
+  let html='';
+  for(let i=1;i<=12;i++){
+    const b=bd[i];if(!b.count)continue;
+    html+=`<div class="rekap-card">
+      <div class="rekap-head">${BULAN[i-1]} ${tahun}<span>${b.count} pelanggan</span></div>
+      <div class="rekap-row"><span class="rl">Total Tagihan</span><span class="rv">${fRp(b.tagihan)}</span></div>
+      <div class="rekap-row"><span class="rl">Total Masuk</span><span class="rv" style="color:var(--green)">${fRp(b.masuk)}</span></div>
+      <div class="rekap-row"><span class="rl">Cash</span><span class="rv">${fRp(b.cash)}</span></div>
+      <div class="rekap-row"><span class="rl">Transfer</span><span class="rv">${fRp(b.transfer)}</span></div>
+      ${b.lunas?`<div class="rekap-row"><span class="rl">Lunas</span><span class="rv" style="color:var(--green)">${b.lunas} org</span></div>`:''}
+      ${b.belum?`<div class="rekap-row"><span class="rl">Belum Bayar</span><span class="rv" style="color:var(--amber)">${b.belum} org</span></div>`:''}
+      ${b.hutang?`<div class="rekap-row"><span class="rl">Hutang</span><span class="rv" style="color:var(--red)">${b.hutang} org</span></div>`:''}
+      ${b.ropel?`<div class="rekap-row"><span class="rl">Bayar Ropel</span><span class="rv" style="color:var(--blue)">${b.ropel} org</span></div>`:''}
+      <div class="rekap-total"><span>Belum Masuk</span><span class="rv">${fRp(b.tagihan-b.masuk)}</span></div>
+    </div>`;
+  }
+  document.getElementById('rekap-container').innerHTML=html||`<div class="empty"><i class="ti ti-chart-bar"></i><p>Belum ada data tahun ${tahun}</p></div>`;
+}
+
+/* STATS */
+function updateStats(){
+  document.getElementById('jml-lunas').textContent=data.filter(d=>d.status==='lunas').length;
+  document.getElementById('jml-belum').textContent=data.filter(d=>d.status==='belum').length;
+  document.getElementById('jml-hutang').textContent=data.filter(d=>d.status==='hutang').length;
+  document.getElementById('jml-ropel').textContent=data.filter(d=>d.status==='ropel').length;
+  const total=data.reduce((s,d)=>s+d.tagihan,0);
+  const masuk=data.reduce((s,d)=>s+d.dibayar,0);
+  document.getElementById('hero-saldo').textContent=fRp(total);
+  document.getElementById('h-masuk').textContent=fRp(masuk);
+  document.getElementById('h-cash').textContent=fRp(data.filter(d=>d.via==='cash').reduce((s,d)=>s+d.dibayar,0));
+  document.getElementById('h-transfer').textContent=fRp(data.filter(d=>d.via==='transfer').reduce((s,d)=>s+d.dibayar,0));
+  document.getElementById('h-nunggak').textContent=fRp(data.filter(d=>d.status==='belum'||d.status==='hutang').reduce((s,d)=>s+(d.tagihan-d.dibayar),0));
+  document.getElementById('h-total').textContent=data.length;
+}
+function updateNotif(){
+  const bar=document.getElementById('notif-bar');
+  const el=document.getElementById('notif-items');
+  const items=[];
+  data.forEach(d=>{
+    if(d.status==='lunas')return;
+    const jt=parseTgl(d.jatuhTempo);if(!jt)return;
+    const h=Math.round((jt-TODAY)/86400000);
+    if(h>=0&&h<=3)items.push(d.nama+' — '+fTgl(d.jatuhTempo)+(h===0?' (hari ini)':' ('+h+' hr lagi)'));
+    if(h<0)items.push(d.nama+' — lewat '+Math.abs(h)+' hari');
+  });
+  if(items.length){bar.className='notif show';el.innerHTML=items.map(i=>'<div class="notif-item">'+i+'</div>').join('');}
+  else bar.className='notif';
+}
+
+/* TAB & SUBMENU */
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('bn-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('show');
+  if(tab==='rekap')renderRekap();
+  if(tab==='analisa')renderAnalisa();
+}
+function setSubMenu(menu,cls){
+  activeSubMenu=menu;activeSmClass=cls;
+  document.querySelectorAll('.smenu-btn').forEach(b=>{b.className='smenu-btn';});
+  document.getElementById('sm-'+menu).className='smenu-btn '+cls;
+  renderData();
+}
+function filterStat(status){
+  if(activeTab!=='data')switchTab('data');
+  const map={lunas:'a-green',belum:'a-amber',hutang:'a-red',ropel:'a-all'};
+  setSubMenu(status,map[status]||'a-all');
+}
+
+/* MODAL PELANGGAN */
+function bukaModal(id){
+  editId=id||null;
+  const ts=TODAY.toISOString().split('T')[0];
+  if(editId){
+    const d=data.find(x=>x.id===editId);
+    document.getElementById('sheet-judul').textContent='Edit Pelanggan';
+    document.getElementById('f-nama').value=d.nama;
+    document.getElementById('f-hp').value=d.hp||'';
+    document.getElementById('f-alamat').value=d.alamat||'';
+    document.getElementById('f-tagihan').value=d.tagihan;
+    document.getElementById('f-dibayar').value=d.dibayar||'';
+    document.getElementById('f-status').value=d.status;
+    document.getElementById('f-via').value=d.via;
+    document.getElementById('f-jatuh-tempo').value=d.jatuhTempo||'';
+    document.getElementById('f-tgl').value=d.tgl||'';
+    document.getElementById('f-catatan').value=d.catatan||'';
+  }else{
+    document.getElementById('sheet-judul').textContent='Tambah Pelanggan';
+    ['f-nama','f-hp','f-alamat','f-catatan'].forEach(i=>document.getElementById(i).value='');
+    ['f-tagihan','f-dibayar'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('f-status').value='lunas';
+    document.getElementById('f-via').value='cash';
+    document.getElementById('f-jatuh-tempo').value='';
+    document.getElementById('f-tgl').value=ts;
+  }
+  document.getElementById('overlay').classList.add('show');
+}
+function tutup(id){document.getElementById(id).classList.remove('show');}
+function cekOverlay(e,id){if(e.target===document.getElementById(id))tutup(id);}
+function editData(id){bukaModal(id);}
+
+function simpan(){
+  const nama=document.getElementById('f-nama').value.trim();
+  const hp=document.getElementById('f-hp').value.trim();
+  const alamat=document.getElementById('f-alamat').value.trim();
+  const tagihan=parseInt(document.getElementById('f-tagihan').value)||0;
+  const dibayarRaw=document.getElementById('f-dibayar').value;
+  const dibayar=dibayarRaw===''?tagihan:parseInt(dibayarRaw)||0;
+  const status=document.getElementById('f-status').value;
+  const via=document.getElementById('f-via').value;
+  const jatuhTempo=document.getElementById('f-jatuh-tempo').value;
+  const tgl=document.getElementById('f-tgl').value;
+  const catatan=document.getElementById('f-catatan').value.trim();
+  if(!nama){alert('Nama wajib diisi.');return;}
+  const obj={nama,hp,alamat,tagihan,dibayar,status,via,jatuhTempo,tgl,catatan};
+  if(editId){const idx=data.findIndex(x=>x.id===editId);data[idx]={id:editId,...obj};}
+  else{data.push({id:nextId++,...obj});}
+  save();tutup('overlay');renderData();
+  if(activeTab==='rekap')renderRekap();
+  if(activeTab==='analisa')renderAnalisa();
+}
+function hapus(id){
+  if(confirm('Hapus data pelanggan ini?')){
+    data=data.filter(d=>d.id!==id);
+    save();renderData();
+    if(activeTab==='rekap')renderRekap();
+    if(activeTab==='analisa')renderAnalisa();
+  }
+}
+
+/* MODAL REKENING */
+function bukaRekeningEdit(){
+  [1,2,3].forEach(i=>{
+    const r=rekening[i-1]||{};
+    document.getElementById('rek'+i+'-nama').value=r.nama||'';
+    document.getElementById('rek'+i+'-bank').value=r.bank||'';
+    document.getElementById('rek'+i+'-norek').value=r.norek||'';
+  });
+  document.getElementById('wa-template').value=waTemplate;
+  document.getElementById('overlay-rek').classList.add('show');
+}
+function simpanRekening(){
+  rekening=[1,2,3].map(i=>({
+    nama:document.getElementById('rek'+i+'-nama').value.trim(),
+    bank:document.getElementById('rek'+i+'-bank').value.trim(),
+    norek:document.getElementById('rek'+i+'-norek').value.trim(),
+  })).filter(r=>r.nama&&r.norek);
+  const tmpl=document.getElementById('wa-template').value.trim();
+  if(tmpl)waTemplate=tmpl;
+  localStorage.setItem('bwifi_rek',JSON.stringify(rekening));
+  localStorage.setItem('bwifi_watemplate',waTemplate);
+  renderRekening();
+  tutup('overlay-rek');
+  alert('Rekening & template pesan WA berhasil disimpan ✓');
+}
+
+/* WHATSAPP */
+function kirimWA(hp,nama,tagihan,jatuhTempo){
+  const noWa=hp.replace(/[^0-9]/g,'').replace(/^0/,'62');
+  const bulanStr=jatuhTempo?BULAN[parseInt(jatuhTempo.split('-')[1])-1]+' '+jatuhTempo.split('-')[0]:'ini';
+  const pesan=waTemplate
+    .replace(/{nama}/g,nama).replace(/{tagihan}/g,fRp(tagihan))
+    .replace(/{bulan}/g,bulanStr).replace(/{rekening}/g,rekStr());
+  window.open('https://wa.me/'+noWa+'?text='+encodeURIComponent(pesan),'_blank');
+}
+
+/* COPY REKENING */
+function copyRek(btn,norek){
+  const ori=btn.innerHTML;
+  const done=()=>{btn.innerHTML='<i class="ti ti-check" style="font-size:11px"></i> Disalin!';btn.classList.add('copied');setTimeout(()=>{btn.innerHTML=ori;btn.classList.remove('copied');},2000);};
+  if(navigator.clipboard)navigator.clipboard.writeText(norek).then(done);
+  else prompt('Salin:',norek);
+}
+
+/* EXPORT EXCEL */
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('Library belum siap.');return;}
+  const lbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+  const rows=data.map(d=>{
+    const flags=autoFlags(d);
+    const cat=[flags.map(f=>f.msg).join('; '),d.catatan].filter(Boolean).join(' | ');
+    return{'Nama':d.nama,'HP':d.hp,'Alamat':d.alamat,'Tagihan':d.tagihan,'Dibayar':d.dibayar,'Kekurangan':d.tagihan-d.dibayar,'Via':d.via==='cash'?'Cash':'Transfer','Status':lbl[d.status],'Jatuh Tempo':d.jatuhTempo||'','Tgl Bayar':d.tgl||'','Catatan':cat};
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:14},{wch:22},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:35}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Pelanggan');
+  const bd={};for(let i=1;i<=12;i++)bd[i]={bulan:BULAN[i-1],tagihan:0,masuk:0,count:0};
+  data.forEach(d=>{const ref=d.tgl||d.jatuhTempo;if(!ref)return;const b=parseInt(ref.split('-')[1]);if(b>=1&&b<=12){bd[b].tagihan+=d.tagihan;bd[b].masuk+=d.dibayar;bd[b].count++;}});
+  const rr=Object.values(bd).filter(b=>b.count>0).map(b=>({'Bulan':b.bulan,'Pelanggan':b.count,'Total Tagihan':b.tagihan,'Total Masuk':b.masuk,'Belum Masuk':b.tagihan-b.masuk}));
+  if(rr.length){const ws2=XLSX.utils.json_to_sheet(rr);XLSX.utils.book_append_sheet(wb,ws2,'Rekap Bulanan');}
+  XLSX.writeFile(wb,'billing-wifi-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+/* BATALKAN LUNAS */
+function batalLunas(id){
+  if(!confirm('Batalkan status lunas pelanggan ini?\nStatus akan direset ke Belum Bayar.'))return;
+  const d=data.find(x=>x.id===id);
+  if(!d)return;
+  d.dibayar=0;
+  d.status='belum';
+  d.tgl='';
+  save();
+  renderData();
+  if(activeTab==='rekap')renderRekap();
+  if(activeTab==='analisa')renderAnalisa();
+}
+
+/* QUICK-PAY */
+let qpayId=null,qpayVia='cash';
+function bukaBayarCepat(id){
+  const d=data.find(x=>x.id===id);
+  if(!d||d.status==='lunas')return;
+  qpayId=id;qpayVia='cash';
+  document.getElementById('qp-nama').textContent=d.nama;
+  document.getElementById('qp-tagihan').textContent=fRp(d.tagihan);
+  document.getElementById('qp-tgl').value=TODAY.toISOString().split('T')[0];
+  pilihVia('cash');
+  document.getElementById('qpay-overlay').classList.add('show');
+}
+function pilihVia(v){
+  qpayVia=v;
+  document.getElementById('qp-cash').className='qpay-via-btn'+(v==='cash'?' selected':'');
+  document.getElementById('qp-transfer').className='qpay-via-btn'+(v==='transfer'?' selected':'');
+}
+function qpayOverlayClick(e){if(e.target===document.getElementById('qpay-overlay'))document.getElementById('qpay-overlay').classList.remove('show');}
+function konfirmasiBayar(){
+  const d=data.find(x=>x.id===qpayId);
+  if(!d)return;
+  const tgl=document.getElementById('qp-tgl').value;
+  if(!tgl){alert('Pilih tanggal bayar dulu.');return;}
+  d.dibayar=d.tagihan;
+  d.status='lunas';
+  d.via=qpayVia;
+  d.tgl=tgl;
+  save();
+  document.getElementById('qpay-overlay').classList.remove('show');
+  renderData();
+  if(activeTab==='rekap')renderRekap();
+  if(activeTab==='analisa')renderAnalisa();
+  // Feedback singkat
+  const toast=document.createElement('div');
+  toast.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0F6E56;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+  toast.textContent='✓ '+d.nama+' — Lunas!';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2200);
+}
+
+// Auto-reset localStorage jika versi data berubah (pindah bulan)
+const DATA_VERSION='mei-2026-v1';
+if(localStorage.getItem('bwifi_version')!==DATA_VERSION){
+  localStorage.removeItem('bwifi_data');
+  localStorage.setItem('bwifi_version',DATA_VERSION);
+}
+
+renderRekening();
+renderData();
+initFirebase();
+</script>
+</body>
+</html>
