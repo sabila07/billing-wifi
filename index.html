@@ -396,7 +396,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -540,12 +540,14 @@ let nextId=Math.max(...data.map(d=>d.id))+1;
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
-let db=null,dbRef=null,fbReady=false;
+let fbReady=false;
 const FB_CONFIG={
-  apiKey:"AIzaSyPLACEHOLDER",
-  authDomain:"billing-wifi-app.firebaseapp.com",
-  databaseURL:"https://billing-wifi-app-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"billing-wifi-app"
+  apiKey:"AIzaSyD4de2BdUFmVEEnigAKJQxCTEINMCJyeH0",
+  authDomain:"billing-wifi-1ef52.firebaseapp.com",
+  projectId:"billing-wifi-1ef52",
+  storageBucket:"billing-wifi-1ef52.firebasestorage.app",
+  messagingSenderId:"384501510012",
+  appId:"1:384501510012:web:f2d69ba38ef3751af9fef9"
 };
 function setSyncStatus(s,msg){
   const dot=document.getElementById('sync-dot');
@@ -559,23 +561,35 @@ function setSyncStatus(s,msg){
 function initFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
-    db=firebase.database();dbRef=db.ref('bwifi/data');
-    dbRef.on('value',snap=>{
-      const val=snap.val();
-      if(val){data=Object.values(val).sort((a,b)=>a.id-b.id);localStorage.setItem('bwifi_data',JSON.stringify(data));renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();setSyncStatus('ok','Tersinkron ✓');}
-      fbReady=true;
-    },()=>{setSyncStatus('err','Offline');fbReady=false;});
-    db.ref('.info/connected').on('value',snap=>setSyncStatus(snap.val()?'ok':'err',snap.val()?'Terhubung':'Terputus'));
+    const fs=firebase.firestore();
+    const docRef=fs.doc('bwifi/main');
+    window._docRef=docRef;
+    docRef.onSnapshot(snap=>{
+      if(!snap.exists){
+        docRef.set({data:data,rekening:rekening,waTemplate:waTemplate});
+        fbReady=true;setSyncStatus('ok','Terhubung ✓');return;
+      }
+      const val=snap.data();
+      if(val.data&&val.data.length){
+        data=val.data.sort((a,b)=>a.id-b.id);
+        nextId=Math.max(...data.map(d=>d.id))+1;
+        localStorage.setItem('bwifi_data',JSON.stringify(data));
+        renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
+      }
+      if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
+      if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
+      fbReady=true;setSyncStatus('ok','Tersinkron ✓');
+    },()=>{setSyncStatus('err','Offline - data lokal');fbReady=false;});
   }catch(e){setSyncStatus('off',null);fbReady=false;}
 }
 
 /* ===== HELPERS ===== */
 function save(){
   localStorage.setItem('bwifi_data',JSON.stringify(data));
-  if(fbReady&&dbRef){
+  if(fbReady&&window._docRef){
     setSyncStatus('syncing','Menyimpan...');
-    const obj={};data.forEach(d=>{obj['id'+d.id]=d;});
-    dbRef.set(obj).then(()=>setSyncStatus('ok','Tersimpan ✓')).catch(e=>setSyncStatus('err','Gagal sync'));
+    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate})
+      .then(()=>setSyncStatus('ok','Tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync'));
   }
 }
 function fRp(n){return'Rp '+Number(n).toLocaleString('id-ID')}
@@ -895,6 +909,10 @@ function simpanRekening(){
   localStorage.setItem('bwifi_watemplate',waTemplate);
   renderRekening();
   tutup('overlay-rek');
+  if(fbReady&&window._docRef){
+    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate})
+      .then(()=>setSyncStatus('ok','Rekening tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync'));
+  }
   alert('Rekening & template pesan WA berhasil disimpan ✓');
 }
 
