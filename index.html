@@ -177,6 +177,16 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .btn-konfirmasi:active{background:var(--green-d)}
 .jt-warn{color:var(--red);font-weight:600}
 .jt-near{color:var(--amber);font-weight:600}
+.sisa-bar{background:var(--red-l);border-top:1px solid var(--red-m);padding:7px 12px;display:flex;align-items:center;justify-content:space-between}
+.sisa-bar .sisa-lbl{font-size:11px;color:var(--red-d);display:flex;align-items:center;gap:4px}
+.sisa-bar .sisa-val{font-size:13px;font-weight:700;color:var(--red-d)}
+.qpay-jumlah{margin-bottom:14px}
+.qpay-jumlah label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.qpay-jumlah input{width:100%;height:52px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:20px;font-weight:700;font-family:var(--font);padding:0 14px;outline:none}
+.qpay-jumlah input:focus{border-color:var(--green)}
+.qpay-sisa-info{font-size:12px;margin-top:6px;padding:8px 10px;border-radius:var(--radius-sm);display:none}
+.qpay-sisa-info.kurang{background:var(--red-l);color:var(--red-d);border:1px solid var(--red-m)}
+.qpay-sisa-info.lunas{background:var(--green-l);color:var(--green-d);border:1px solid var(--green-m)}
 .info-box{border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;margin-bottom:12px}
 .info-box.amber{background:var(--amber-l);border:1px solid var(--amber-m);color:var(--amber-d)}
 .info-box.green{background:var(--green-l);border:1px solid var(--green-m);color:var(--green-d)}
@@ -398,16 +408,21 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <div class="qpay-body">
       <div class="qpay-nama" id="qp-nama">—</div>
       <div class="qpay-tagihan" id="qp-tagihan">Rp 0</div>
-      <div class="qpay-sub">Konfirmasi pembayaran pelanggan ini</div>
+      <div class="qpay-sub" id="qp-sub">Konfirmasi pembayaran pelanggan ini</div>
       <div class="qpay-via">
         <button class="qpay-via-btn selected" id="qp-cash" onclick="pilihVia('cash')">💵 Cash</button>
         <button class="qpay-via-btn" id="qp-transfer" onclick="pilihVia('transfer')">🏦 Transfer</button>
+      </div>
+      <div class="qpay-jumlah">
+        <label>Jumlah Dibayar (Rp)</label>
+        <input type="number" id="qp-dibayar" placeholder="0" oninput="updateQpaySisa()"/>
+        <div class="qpay-sisa-info" id="qp-sisa-info"></div>
       </div>
       <div class="qpay-tgl">
         <label>Tanggal Bayar</label>
         <input type="date" id="qp-tgl"/>
       </div>
-      <button class="btn-konfirmasi" onclick="konfirmasiBayar()"><i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Lunas</button>
+      <button class="btn-konfirmasi" id="btn-konfirmasi" onclick="konfirmasiBayar()"><i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Lunas</button>
     </div>
   </div>
 </div>
@@ -807,13 +822,14 @@ function renderData(){
       ${d.alamat?`<div class="card-addr"><i class="ti ti-map-pin"></i>${d.alamat}</div>`:''}
       <div class="card-body">
         <div class="card-field"><div class="lbl">Tagihan</div><div class="val">${fRp(d.tagihan)}</div></div>
-        <div class="card-field"><div class="lbl">Dibayar</div><div class="val">${d.dibayar>0?fRp(d.dibayar):'—'}</div></div>
+        <div class="card-field"><div class="lbl">Dibayar</div><div class="val" style="${d.dibayar>0&&d.dibayar<d.tagihan?'color:var(--amber);font-weight:600':''}">${d.dibayar>0?fRp(d.dibayar):'—'}</div></div>
         <div class="card-field"><div class="lbl">Jatuh Tempo</div><div class="val">${jtH}</div></div>
         <div class="card-field"><div class="lbl">Tgl Bayar</div><div class="val">${fTgl(d.tgl)}</div></div>
       </div>
+      ${d.dibayar>0&&d.dibayar<d.tagihan?`<div class="sisa-bar"><span class="sisa-lbl"><i class="ti ti-alert-circle" style="font-size:13px"></i> Sisa Tagihan</span><span class="sisa-val">${fRp(d.tagihan-d.dibayar)}</span></div>`:''}
       ${hasCat?`<div class="card-catatan"><i class="ti ti-notes" style="font-size:12px;flex-shrink:0"></i>${fb}${d.catatan?`<span>${d.catatan}</span>`:''}</div>`:''}
       <div class="card-actions">
-        ${d.tagihan>0&&d.status!=='lunas'?`<button class="btn-bayar" onclick="bukaBayarCepat(${d.id})"><i class="ti ti-cash" style="font-size:14px"></i> ✓ Bayar</button>`:d.status==='lunas'?`<button class="btn-batal" onclick="batalLunas(${d.id})"><i class="ti ti-rotate-left" style="font-size:12px"></i> Batalkan</button>`:``}
+        ${d.tagihan>0&&d.status!=='lunas'?`<button class="btn-bayar" onclick="bukaBayarCepat(${d.id})"><i class="ti ti-cash" style="font-size:14px"></i> ${d.dibayar>0&&d.dibayar<d.tagihan?'Bayar Sisa':'✓ Bayar'}</button>`:d.status==='lunas'?`<button class="btn-batal" onclick="batalLunas(${d.id})"><i class="ti ti-rotate-left" style="font-size:12px"></i> Batalkan</button>`:``}
         ${d.hp?`<button class="btn-wa" onclick="kirimWA('${safeHp}','${safeNama}',${d.tagihan},'${d.jatuhTempo||''}')"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button>
         <a class="btn-telp" href="tel:${(d.hp||'').replace(/[^0-9]/g,'')}"><i class="ti ti-phone" style="font-size:14px"></i></a>`:''}
         <button class="act-btn" onclick="editData(${d.id})"><i class="ti ti-edit" style="font-size:12px"></i></button>
@@ -1094,7 +1110,7 @@ function exportExcel(){
 
 /* BATALKAN LUNAS */
 function batalLunas(id){
-  if(!confirm('Batalkan status lunas pelanggan ini?\nStatus akan direset ke Belum Bayar.'))return;
+  if(!confirm('Batalkan pembayaran pelanggan ini?\nStatus dan jumlah bayar akan direset ke awal.'))return;
   const d=data.find(x=>x.id===id);
   if(!d)return;
   d.dibayar=0;
@@ -1113,10 +1129,43 @@ function bukaBayarCepat(id){
   if(!d||d.status==='lunas')return;
   qpayId=id;qpayVia='cash';
   document.getElementById('qp-nama').textContent=d.nama;
+  const sudahDibayar=d.dibayar||0;
+  const sisa=d.tagihan-sudahDibayar;
   document.getElementById('qp-tagihan').textContent=fRp(d.tagihan);
+  document.getElementById('qp-sub').textContent=sudahDibayar>0
+    ?'Sudah dibayar '+fRp(sudahDibayar)+' · Sisa '+fRp(sisa)
+    :'Konfirmasi pembayaran pelanggan ini';
+  document.getElementById('qp-dibayar').value=sisa;
   document.getElementById('qp-tgl').value=TODAY.toISOString().split('T')[0];
+  document.getElementById('qp-sisa-info').style.display='none';
   pilihVia('cash');
+  updateQpaySisa();
   document.getElementById('qpay-overlay').classList.add('show');
+}
+function updateQpaySisa(){
+  const d=data.find(x=>x.id===qpayId);if(!d)return;
+  const input=parseInt(document.getElementById('qp-dibayar').value)||0;
+  const sudah=d.dibayar||0;
+  const totalSetelah=sudah+input;
+  const sisa=d.tagihan-totalSetelah;
+  const infoEl=document.getElementById('qp-sisa-info');
+  const btnEl=document.getElementById('btn-konfirmasi');
+  if(input<=0){
+    infoEl.style.display='none';
+    btnEl.innerHTML='<i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Bayar';
+    return;
+  }
+  if(sisa>0){
+    infoEl.className='qpay-sisa-info kurang';
+    infoEl.style.display='block';
+    infoEl.innerHTML='<i class="ti ti-alert-circle"></i> Kurang <b>'+fRp(sisa)+'</b> — status menjadi <b>Hutang</b>';
+    btnEl.innerHTML='<i class="ti ti-check" style="font-size:18px"></i> Bayar '+fRp(input)+' (Kurang '+fRp(sisa)+')';
+  } else {
+    infoEl.className='qpay-sisa-info lunas';
+    infoEl.style.display='block';
+    infoEl.innerHTML='<i class="ti ti-circle-check"></i> Pembayaran <b>Lunas</b> ✓';
+    btnEl.innerHTML='<i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Lunas';
+  }
 }
 function pilihVia(v){
   qpayVia=v;
@@ -1129,8 +1178,13 @@ function konfirmasiBayar(){
   if(!d)return;
   const tgl=document.getElementById('qp-tgl').value;
   if(!tgl){alert('Pilih tanggal bayar dulu.');return;}
-  d.dibayar=d.tagihan;
-  d.status='lunas';
+  const input=parseInt(document.getElementById('qp-dibayar').value)||0;
+  if(input<=0){alert('Masukkan jumlah yang dibayar.');return;}
+  const sudah=d.dibayar||0;
+  const totalDibayar=sudah+input;
+  const sisa=d.tagihan-totalDibayar;
+  d.dibayar=sisa<=0?d.tagihan:totalDibayar;
+  d.status=sisa<=0?'lunas':'hutang';
   d.via=qpayVia;
   d.tgl=tgl;
   save();
@@ -1138,12 +1192,12 @@ function konfirmasiBayar(){
   renderData();
   if(activeTab==='rekap')renderRekap();
   if(activeTab==='analisa')renderAnalisa();
-  // Feedback singkat
   const toast=document.createElement('div');
-  toast.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0F6E56;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
-  toast.textContent='✓ '+d.nama+' — Lunas!';
+  const isLunas=sisa<=0;
+  toast.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);background:'+(isLunas?'#0F6E56':'#BA7517');
+  toast.textContent=isLunas?'✓ '+d.nama+' — Lunas!':'⚠ '+d.nama+' — Sisa '+fRp(Math.max(0,sisa));
   document.body.appendChild(toast);
-  setTimeout(()=>toast.remove(),2200);
+  setTimeout(()=>toast.remove(),2500);
 }
 
 // Auto-reset localStorage jika versi data berubah (pindah bulan)
