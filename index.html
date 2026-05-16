@@ -187,18 +187,36 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   .fg input,.fg select,.fg textarea{background:#0e1a17;color:var(--text)}
   .card-catatan{background:#0e1a17}
 }
+.hmenu-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end}
+.hmenu-overlay.show{display:flex}
+.hmenu-sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;padding-bottom:env(safe-area-inset-bottom,16px)}
+.hmenu-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px}
+.hmenu-head{text-align:center;padding:4px 16px 14px;font-size:13px;font-weight:600;color:var(--muted)}
+.hmenu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 20px}
+.hmenu-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 8px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--bg);cursor:pointer}
+.hmenu-item:active{opacity:.7}
+.hmenu-item i{font-size:28px}
+.hmenu-item span{font-size:11px;font-weight:600;color:var(--text);text-align:center}
+.page-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;flex-direction:column}
+.page-overlay.show{display:flex}
+.page-header{background:#0F6E56;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.page-back{background:rgba(255,255,255,.2);border:none;color:#fff;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0}
+.page-title{font-size:16px;font-weight:600}
+.page-body{flex:1;overflow-y:auto;padding:16px}
+.ex-count{background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-weight:700;color:var(--green-d);text-align:center;margin-bottom:14px}
+#map{width:100%;height:calc(100vh - 58px)}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-title">
-    <i class="ti ti-wifi"></i>
+  <div class="topbar-title" onclick="bukaHomeMenu()" style="cursor:pointer">
+    <i class="ti ti-home"></i>
     <div><h1>Billing WiFi</h1><div class="topbar-sub">Kelola tagihan pelanggan</div></div>
   </div>
   <div class="topbar-btns">
     <div id="sync-dot" title="Status sync"></div>
-    <button class="topbar-btn" onclick="exportExcel()" aria-label="Export Excel"><i class="ti ti-file-spreadsheet"></i></button>
+    <button class="topbar-btn" onclick="bukaExportModal()" aria-label="Export Excel"><i class="ti ti-file-spreadsheet"></i></button>
     <button class="topbar-btn" onclick="bukaModal()" aria-label="Tambah"><i class="ti ti-plus"></i></button>
   </div>
 </div>
@@ -394,6 +412,98 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   </div>
 </div>
 
+<!-- HOME MENU -->
+<div class="hmenu-overlay" id="hmenu-overlay" onclick="if(event.target===this)tutupHomeMenu()">
+  <div class="hmenu-sheet">
+    <div class="hmenu-handle"></div>
+    <div class="hmenu-head">Menu Utama</div>
+    <div class="hmenu-grid">
+      <div class="hmenu-item" onclick="bukaPanel('server')">
+        <i class="ti ti-server" style="color:var(--blue)"></i>
+        <span>Server</span>
+      </div>
+      <div class="hmenu-item" onclick="bukaPanel('odp')">
+        <i class="ti ti-router" style="color:var(--green)"></i>
+        <span>ODP</span>
+      </div>
+      <div class="hmenu-item" onclick="bukaPanel('peta')">
+        <i class="ti ti-map-2" style="color:var(--amber)"></i>
+        <span>Peta Pelanggan</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVER PANEL -->
+<div class="page-overlay" id="panel-server">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-server')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-server" style="font-size:20px"></i>
+    <span class="page-title">Server</span>
+  </div>
+  <div class="page-body" id="server-body">
+    <div class="empty"><i class="ti ti-server"></i><p>Belum ada data server.<br>Fitur ini akan segera tersedia.</p></div>
+  </div>
+</div>
+
+<!-- ODP PANEL -->
+<div class="page-overlay" id="panel-odp">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-odp')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-router" style="font-size:20px"></i>
+    <span class="page-title">ODP</span>
+  </div>
+  <div class="page-body" id="odp-body">
+    <div class="empty"><i class="ti ti-router"></i><p>Belum ada data ODP.<br>Fitur ini akan segera tersedia.</p></div>
+  </div>
+</div>
+
+<!-- PETA PELANGGAN -->
+<div class="page-overlay" id="panel-peta">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-peta')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-map-2" style="font-size:20px"></i>
+    <span class="page-title">Peta Pelanggan</span>
+  </div>
+  <div class="page-body" style="padding:0;display:flex;flex-direction:column">
+    <div id="map"></div>
+    <div id="peta-info" style="padding:10px 16px;font-size:11px;color:var(--muted);text-align:center;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="export-overlay" onclick="cekOverlay(event,'export-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2><i class="ti ti-file-spreadsheet" style="font-size:16px;color:var(--green);margin-right:6px"></i>Export Excel</h2>
+      <button class="sheet-close" onclick="tutup('export-overlay')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="fg">
+        <label>Filter Data</label>
+        <select id="ex-filter" onchange="updateExCount()">
+          <option value="semua">📋 Semua Pelanggan</option>
+          <option value="baru">✨ Pelanggan Baru (3 bulan)</option>
+          <option value="lunas">✅ Sudah Lunas</option>
+          <option value="belum">⏳ Belum Bayar</option>
+          <option value="hutang">🔴 Hutang</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Filter Bulan</label>
+        <select id="ex-bulan" onchange="updateExCount()">
+          <option value="">Semua Bulan</option>
+        </select>
+      </div>
+      <div class="ex-count" id="ex-count">0 pelanggan akan diexport</div>
+      <button class="btn-simpan" onclick="doExportExcel()"><i class="ti ti-file-spreadsheet"></i> Download Excel</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -1041,6 +1151,87 @@ const DATA_VERSION='mei-2026-v1';
 if(localStorage.getItem('bwifi_version')!==DATA_VERSION){
   localStorage.removeItem('bwifi_data');
   localStorage.setItem('bwifi_version',DATA_VERSION);
+}
+
+/* ===== HOME MENU ===== */
+function bukaHomeMenu(){document.getElementById('hmenu-overlay').classList.add('show');}
+function tutupHomeMenu(){document.getElementById('hmenu-overlay').classList.remove('show');}
+function bukaPanel(nama){
+  tutupHomeMenu();
+  document.getElementById('panel-'+nama).classList.add('show');
+  if(nama==='peta')initPeta();
+}
+function tutupPanel(id){document.getElementById(id).classList.remove('show');}
+
+/* ===== PETA ===== */
+let _map=null;
+function initPeta(){
+  if(_map)return;
+  const center=[-7.25,110.0];
+  _map=L.map('map').setView(center,12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:18
+  }).addTo(_map);
+  const withAddr=data.filter(d=>d.alamat);
+  document.getElementById('peta-info').textContent=withAddr.length
+    ?withAddr.length+' pelanggan memiliki alamat (geocoding manual diperlukan untuk pin peta)'
+    :'Tambahkan alamat pelanggan agar dapat ditampilkan di peta';
+}
+
+/* ===== EXPORT EXCEL ===== */
+function bukaExportModal(){
+  const sel=document.getElementById('ex-bulan');
+  sel.innerHTML='<option value="">Semua Bulan</option>';
+  const now=new Date();
+  for(let i=0;i<13;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    sel.innerHTML+=`<option value="${val}">${BULAN[d.getMonth()]} ${d.getFullYear()}</option>`;
+  }
+  updateExCount();
+  document.getElementById('export-overlay').classList.add('show');
+}
+function getExportData(){
+  const filter=document.getElementById('ex-filter').value;
+  const bulan=document.getElementById('ex-bulan').value;
+  const batas3=new Date(TODAY);batas3.setMonth(batas3.getMonth()-3);
+  const batas3str=batas3.toISOString().slice(0,10);
+  return data.filter(d=>{
+    const ref=d.tgl||d.jatuhTempo||'';
+    const matchBulan=!bulan||ref.startsWith(bulan);
+    if(filter==='semua')return matchBulan;
+    if(filter==='baru')return matchBulan&&ref>=batas3str;
+    if(filter==='lunas')return matchBulan&&d.status==='lunas';
+    if(filter==='belum')return matchBulan&&d.status==='belum';
+    if(filter==='hutang')return matchBulan&&d.status==='hutang';
+    return matchBulan;
+  });
+}
+function updateExCount(){
+  const n=getExportData().length;
+  document.getElementById('ex-count').textContent=n+' pelanggan akan diexport';
+}
+function doExportExcel(){
+  if(typeof XLSX==='undefined'){alert('Library belum siap.');return;}
+  const filtered=getExportData();
+  if(!filtered.length){alert('Tidak ada data untuk diexport.');return;}
+  const lbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+  const filterLbl={semua:'Semua',baru:'Pelanggan-Baru',lunas:'Lunas',belum:'Belum-Bayar',hutang:'Hutang'};
+  const rows=filtered.map(d=>{
+    const flags=autoFlags(d);
+    const cat=[flags.map(f=>f.msg).join('; '),d.catatan].filter(Boolean).join(' | ');
+    return{'Nama':d.nama,'HP':d.hp,'Alamat':d.alamat,'Tagihan':d.tagihan,'Dibayar':d.dibayar,'Kekurangan':d.tagihan-d.dibayar,'Via':d.via==='cash'?'Cash':'Transfer','Status':lbl[d.status],'Jatuh Tempo':d.jatuhTempo||'','Tgl Bayar':d.tgl||'','Catatan':cat};
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:14},{wch:22},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:35}];
+  const wb=XLSX.utils.book_new();
+  const fv=document.getElementById('ex-filter').value;
+  const bv=document.getElementById('ex-bulan').value;
+  XLSX.utils.book_append_sheet(wb,ws,filterLbl[fv]||'Data');
+  const tgl=new Date().toISOString().slice(0,10);
+  const fname=`billing-wifi-${filterLbl[fv]||'export'}${bv?'-'+bv:''}-${tgl}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  tutup('export-overlay');
 }
 
 renderRekening();
