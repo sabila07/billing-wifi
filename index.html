@@ -744,10 +744,18 @@ function initFirebase(){
     connectFirestore();
     window.addEventListener('online',()=>{
       setSyncStatus('syncing','Internet tersambung, sinkronisasi...');
-      if(!fbReady)connectFirestore();
+      fbReady=false;connectFirestore();
     });
     window.addEventListener('offline',()=>{
       setSyncStatus('err','Tidak ada internet');fbReady=false;
+    });
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible'){
+        fbReady=false;connectFirestore();
+      }
+    });
+    window.addEventListener('focus',()=>{
+      if(!fbReady)connectFirestore();
     });
   }catch(e){
     setSyncStatus('err','Gagal inisialisasi Firebase');scheduleRetry();
