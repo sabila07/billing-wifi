@@ -231,6 +231,11 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .stat-search-input:focus{border-color:var(--green);background:#fff}
 .stat-search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none}
 .stat-search-rel{position:relative}
+.dp-card{border-radius:var(--radius);padding:20px 16px;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.15);transition:opacity .15s}
+.dp-card:active{opacity:.85}
+.dp-card-label{font-size:15px;font-weight:700;margin-top:4px}
+.dp-card-count{font-size:34px;font-weight:700;line-height:1.1}
+.dp-card-sub{font-size:11px;opacity:.8}
 .stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
 .stat-bayar-btn:active{opacity:.85}
 /* LOGIN */
@@ -372,6 +377,9 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
         <div class="fg"><label>Bayar Via</label>
           <select id="f-via"><option value="cash">💵 Cash</option><option value="transfer">🏦 Transfer</option></select>
         </div>
+        <div class="fg"><label>Tipe Koneksi</label>
+          <select id="f-koneksi"><option value="pppoe">PPPoE</option><option value="dhcp">DHCP</option></select>
+        </div>
       </div>
       <div class="fg"><label>Jumlah Dibayar (Rp)</label><input type="number" id="f-dibayar" placeholder="Kosongkan jika sama dengan tagihan" min="0"/><div class="fg-hint">Isi jika bayar kurang dari tagihan</div></div>
       <div class="fg-row">
@@ -472,6 +480,10 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
         <i class="ti ti-map-2" style="color:var(--amber)"></i>
         <span>Peta Pelanggan</span>
       </div>
+      <div class="hmenu-item" onclick="bukaPanelDataPelanggan();tutupHomeMenu()">
+        <i class="ti ti-users" style="color:var(--purple)"></i>
+        <span>Data Pelanggan</span>
+      </div>
     </div>
     <div class="hmenu-rek">
       <div class="hmenu-rek-title">
@@ -485,6 +497,66 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       <button class="hmenu-auth-btn" style="background:var(--red-l);color:var(--red-d)" onclick="logout()"><i class="ti ti-logout" style="font-size:14px"></i> Keluar</button>
     </div>
   </div>
+</div>
+
+<!-- DATA PELANGGAN PANEL -->
+<div class="page-overlay" id="panel-data-pelanggan">
+  <div class="page-header" style="background:#534AB7">
+    <button class="page-back" onclick="tutupPanel('panel-data-pelanggan')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-users" style="font-size:20px"></i>
+    <span class="page-title">Data Pelanggan</span>
+  </div>
+  <div class="page-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="dp-card" id="dp-pppoe-card" onclick="bukaListKoneksi('pppoe')" style="background:linear-gradient(135deg,#185FA5,#0C447C)">
+        <i class="ti ti-network" style="font-size:32px;opacity:.85"></i>
+        <div class="dp-card-label">PPPoE</div>
+        <div class="dp-card-count" id="dp-pppoe-count">0</div>
+        <div class="dp-card-sub">pelanggan</div>
+      </div>
+      <div class="dp-card" id="dp-dhcp-card" onclick="bukaListKoneksi('dhcp')" style="background:linear-gradient(135deg,#1D9E75,#085041)">
+        <i class="ti ti-wifi" style="font-size:32px;opacity:.85"></i>
+        <div class="dp-card-label">DHCP</div>
+        <div class="dp-card-count" id="dp-dhcp-count">0</div>
+        <div class="dp-card-sub">pelanggan</div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted)">RINGKASAN</div>
+      <div style="padding:12px 14px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">Total Pelanggan</span>
+        <span style="font-weight:700;font-size:13px" id="dp-total">0</span>
+      </div>
+      <div style="padding:12px 14px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">PPPoE Lunas</span>
+        <span style="font-weight:700;font-size:13px;color:var(--green)" id="dp-pppoe-lunas">0</span>
+      </div>
+      <div style="padding:12px 14px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">DHCP Lunas</span>
+        <span style="font-weight:700;font-size:13px;color:var(--green)" id="dp-dhcp-lunas">0</span>
+      </div>
+      <div style="padding:12px 14px;display:flex;justify-content:space-between">
+        <span style="font-size:13px">Belum/Hutang (semua)</span>
+        <span style="font-weight:700;font-size:13px;color:var(--red)" id="dp-belum-all">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIST KONEKSI PANEL -->
+<div class="page-overlay" id="panel-list-koneksi">
+  <div class="page-header" id="lk-header" style="background:#185FA5">
+    <button class="page-back" onclick="tutupPanel('panel-list-koneksi')"><i class="ti ti-arrow-left"></i></button>
+    <span class="page-title" id="lk-title">PPPoE</span>
+    <span id="lk-count" style="margin-left:auto;background:rgba(255,255,255,.22);padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600"></span>
+  </div>
+  <div class="stat-search-wrap">
+    <div class="stat-search-rel">
+      <i class="ti ti-search stat-search-icon"></i>
+      <input class="stat-search-input" id="lk-search" type="text" placeholder="Cari nama, HP, atau alamat…" oninput="filterListKoneksi(this.value)"/>
+    </div>
+  </div>
+  <div class="page-body" id="lk-body"></div>
 </div>
 
 <!-- GANTI PASSWORD PANEL -->
@@ -1179,6 +1251,7 @@ function bukaModal(id){
     document.getElementById('f-dibayar').value=d.dibayar||'';
     document.getElementById('f-status').value=d.status;
     document.getElementById('f-via').value=d.via;
+    document.getElementById('f-koneksi').value=d.koneksi||'pppoe';
     document.getElementById('f-jatuh-tempo').value=d.jatuhTempo||'';
     document.getElementById('f-tgl').value=d.tgl||'';
     document.getElementById('f-catatan').value=d.catatan||'';
@@ -1188,6 +1261,7 @@ function bukaModal(id){
     ['f-tagihan','f-dibayar'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-status').value='lunas';
     document.getElementById('f-via').value='cash';
+    document.getElementById('f-koneksi').value='pppoe';
     document.getElementById('f-jatuh-tempo').value='';
     document.getElementById('f-tgl').value=ts;
   }
@@ -1206,6 +1280,7 @@ function simpan(){
   const dibayarRaw=document.getElementById('f-dibayar').value;
   const dibayar=dibayarRaw===''?(status==='lunas'?tagihan:0):parseInt(dibayarRaw)||0;
   const via=document.getElementById('f-via').value;
+  const koneksi=document.getElementById('f-koneksi').value;
   const jatuhTempo=document.getElementById('f-jatuh-tempo').value;
   const tgl=document.getElementById('f-tgl').value;
   const catatan=document.getElementById('f-catatan').value.trim();
@@ -1213,7 +1288,7 @@ function simpan(){
   const namaKey=nama.toLowerCase();
   const duplikat=data.find(x=>x.nama.trim().toLowerCase()===namaKey&&x.id!==editId);
   if(duplikat){alert('Nama "'+duplikat.nama+'" sudah ada di daftar. Gunakan nama berbeda atau tambahkan keterangan (contoh: Budi (2)).');return;}
-  const obj={nama,hp,alamat,tagihan,dibayar,status,via,jatuhTempo,tgl,catatan};
+  const obj={nama,hp,alamat,tagihan,dibayar,status,via,koneksi,jatuhTempo,tgl,catatan};
   if(editId){const idx=data.findIndex(x=>x.id===editId);data[idx]={id:editId,...obj};}
   else{data.push({id:nextId++,...obj});}
   save();tutup('overlay');renderData();
@@ -1413,6 +1488,65 @@ function bukaPanel(nama){
   if(nama==='peta')initPeta();
 }
 function tutupPanel(id){document.getElementById(id).classList.remove('show');}
+
+/* ===== DATA PELANGGAN ===== */
+let _lkData=[],_lkKoneksi='';
+function bukaPanelDataPelanggan(){
+  const pppoe=data.filter(d=>(d.koneksi||'pppoe')==='pppoe');
+  const dhcp=data.filter(d=>d.koneksi==='dhcp');
+  const belumAll=data.filter(d=>d.status==='belum'||d.status==='hutang');
+  document.getElementById('dp-pppoe-count').textContent=pppoe.length;
+  document.getElementById('dp-dhcp-count').textContent=dhcp.length;
+  document.getElementById('dp-total').textContent=data.length;
+  document.getElementById('dp-pppoe-lunas').textContent=pppoe.filter(d=>d.status==='lunas').length;
+  document.getElementById('dp-dhcp-lunas').textContent=dhcp.filter(d=>d.status==='lunas').length;
+  document.getElementById('dp-belum-all').textContent=belumAll.length;
+  document.getElementById('panel-data-pelanggan').classList.add('show');
+}
+function bukaListKoneksi(koneksi){
+  const lbl={pppoe:'Pelanggan PPPoE',dhcp:'Pelanggan DHCP'};
+  const bg={pppoe:'#185FA5',dhcp:'#0F6E56'};
+  const list=data.filter(d=>(d.koneksi||'pppoe')===koneksi);
+  list.sort((a,b)=>a.nama.localeCompare(b.nama));
+  _lkData=list;_lkKoneksi=koneksi;
+  document.getElementById('lk-title').textContent=lbl[koneksi]||koneksi;
+  document.getElementById('lk-header').style.background=bg[koneksi]||'#185FA5';
+  document.getElementById('lk-search').value='';
+  renderListKoneksi(list);
+  document.getElementById('panel-list-koneksi').classList.add('show');
+}
+function renderListKoneksi(list){
+  const count=document.getElementById('lk-count');
+  const body=document.getElementById('lk-body');
+  count.textContent=list.length+' orang';
+  const statusBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1FB'};
+  const statusClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C'};
+  const statusLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+  if(!list.length){body.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Tidak ada pelanggan</p></div>';return;}
+  body.innerHTML=list.map((d,i)=>{
+    const sisa=d.tagihan-(d.dibayar||0);
+    const adaSisa=(d.dibayar||0)>0&&sisa>0;
+    const needPay=d.status==='belum'||d.status==='hutang';
+    return`<div class="stat-detail-item">
+      <div class="stat-detail-num" style="background:#E6F1FB;color:#0C447C">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div class="stat-detail-nama">${d.nama}${d.hp?`<a href="https://wa.me/${(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62')}" target="_blank" style="font-size:10px;color:#25D366;font-weight:500;margin-left:6px;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:11px;vertical-align:middle"></i> ${d.hp}</a>`:''}</div>
+        <div class="stat-detail-meta">
+          ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
+          ${(d.dibayar||0)>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
+          <span style="background:${statusBg[d.status]||'#eee'};color:${statusClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${statusLbl[d.status]||d.status}</span>
+        </div>
+        ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
+        ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterListKoneksi(q){
+  const s=q.trim().toLowerCase();
+  const filtered=s?_lkData.filter(d=>(d.nama||'').toLowerCase().includes(s)||(d.hp||'').toLowerCase().includes(s)||(d.alamat||'').toLowerCase().includes(s)):_lkData;
+  renderListKoneksi(filtered);
+}
 
 /* ===== PETA ===== */
 let _map=null;
