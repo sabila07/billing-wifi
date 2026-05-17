@@ -231,6 +231,17 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .stat-search-input:focus{border-color:var(--green);background:#fff}
 .stat-search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none}
 .stat-search-rel{position:relative}
+.paket-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px}
+.paket-item-info{flex:1;min-width:0}
+.paket-item-nama{font-size:13px;font-weight:600}
+.paket-item-harga{font-size:12px;color:var(--green);font-weight:500;margin-top:1px}
+.paket-item-del{background:var(--red-l);border:none;border-radius:6px;color:var(--red-d);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px}
+.lk-card{background:#fff;border-radius:var(--radius-sm);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px}
+.lk-card-nama{font-size:14px;font-weight:600;margin-bottom:4px}
+.lk-card-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.8}
+.lk-card-paket{background:var(--blue-l);color:var(--blue-d);padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.lk-card-actions{display:flex;gap:7px;margin-top:8px}
+.lk-card-btn{flex:1;padding:6px;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px}
 .dp-card{border-radius:var(--radius);padding:20px 16px;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.15);transition:opacity .15s}
 .dp-card:active{opacity:.85}
 .dp-card-label{font-size:15px;font-weight:700;margin-top:4px}
@@ -238,6 +249,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .dp-card-sub{font-size:11px;opacity:.8}
 .stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
 .stat-bayar-btn:active{opacity:.85}
+#overlay-pppoe{z-index:410}
 /* LOGIN */
 #login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
 #login-screen.show{display:flex}
@@ -550,13 +562,65 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <span class="page-title" id="lk-title">PPPoE</span>
     <span id="lk-count" style="margin-left:auto;background:rgba(255,255,255,.22);padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600"></span>
   </div>
-  <div class="stat-search-wrap">
-    <div class="stat-search-rel">
+  <div class="stat-search-wrap" style="display:flex;gap:8px;align-items:center;padding:10px 12px 6px">
+    <div class="stat-search-rel" style="flex:1">
       <i class="ti ti-search stat-search-icon"></i>
-      <input class="stat-search-input" id="lk-search" type="text" placeholder="Cari nama, HP, atau alamat…" oninput="filterListKoneksi(this.value)"/>
+      <input class="stat-search-input" id="lk-search" type="text" placeholder="Cari nama, HP, NIK…" oninput="filterListKoneksi(this.value)"/>
+    </div>
+    <button id="lk-paket-btn" onclick="bukaPanelPaket()" style="display:none;flex-shrink:0;background:rgba(24,95,165,.12);border:1px solid rgba(24,95,165,.25);color:#0C447C;border-radius:var(--radius-sm);padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap"><i class="ti ti-package" style="font-size:13px;vertical-align:middle"></i> Paket</button>
+  </div>
+  <div class="page-body" id="lk-body" style="padding-bottom:80px"></div>
+  <button id="lk-fab" onclick="bukaFormPppoe(null)" style="display:none;position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;background:#185FA5;color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(24,95,165,.45);z-index:410;display:none;align-items:center;justify-content:center"><i class="ti ti-plus"></i></button>
+</div>
+
+<!-- FORM PPPOE SHEET -->
+<div class="overlay" id="overlay-pppoe" onclick="cekOverlay(event,'overlay-pppoe')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <span class="sheet-judul" id="pppoe-judul">Tambah Pelanggan PPPoE</span>
+      <button class="sheet-close" onclick="tutup('overlay-pppoe')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="fg"><label>Nama Lengkap</label><input type="text" id="pp-nama" placeholder="Budi Santoso"/></div>
+      <div class="fg"><label>NIK (No. Identitas)</label><input type="text" id="pp-nik" placeholder="3312xxxxxxxxxxxxxx" inputmode="numeric"/></div>
+      <div class="fg"><label>Nomor WhatsApp</label><input type="tel" id="pp-wa" placeholder="0812-xxxx-xxxx" inputmode="tel"/></div>
+      <div class="fg">
+        <label>Paket Langganan</label>
+        <div style="display:flex;gap:8px">
+          <select id="pp-paket" style="flex:1" onchange="onPilihPaket()"><option value="">-- Pilih Paket --</option></select>
+          <button onclick="bukaPanelPaket()" style="flex-shrink:0;background:var(--blue-l);border:1px solid var(--blue-m);color:var(--blue-d);border-radius:var(--radius-sm);padding:0 10px;font-size:12px;cursor:pointer;font-family:var(--font)"><i class="ti ti-settings" style="font-size:13px"></i></button>
+        </div>
+        <div class="fg-hint" id="pp-paket-harga"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Tgl Aktivasi</label><input type="date" id="pp-aktivasi"/></div>
+        <div class="fg"><label>Jatuh Tempo / Isolir</label><input type="date" id="pp-tempo"/></div>
+      </div>
+      <div class="fg"><label>Alamat</label><input type="text" id="pp-alamat" placeholder="Jl. Merdeka No. 10"/></div>
+      <div class="fg"><label>Catatan</label><textarea id="pp-catatan" placeholder="Contoh: router di lantai 2..."></textarea></div>
+      <button class="btn-simpan" onclick="simpanPppoe()"><i class="ti ti-check" style="font-size:16px"></i> Simpan Pelanggan</button>
     </div>
   </div>
-  <div class="page-body" id="lk-body"></div>
+</div>
+
+<!-- KELOLA PAKET PANEL -->
+<div class="page-overlay" id="panel-paket">
+  <div class="page-header" style="background:#185FA5">
+    <button class="page-back" onclick="tutupPanel('panel-paket')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-package" style="font-size:20px"></i>
+    <span class="page-title">Kelola Paket</span>
+  </div>
+  <div class="page-body">
+    <div class="section-lbl">Daftar Paket Langganan</div>
+    <div id="paket-list-render" style="margin-bottom:14px"></div>
+    <div class="card" style="padding:14px;border:1.5px dashed var(--blue-m);background:var(--blue-l)">
+      <div style="font-size:12px;font-weight:600;color:var(--blue-d);margin-bottom:10px"><i class="ti ti-plus" style="font-size:13px"></i> Tambah Paket Baru</div>
+      <div class="fg"><label>Nama Paket</label><input type="text" id="np-nama" placeholder="Paket 10 Mbps"/></div>
+      <div class="fg"><label>Harga (Rp)</label><input type="number" id="np-harga" placeholder="150000" inputmode="numeric"/></div>
+      <button class="btn-simpan" style="margin-top:4px" onclick="tambahPaket()"><i class="ti ti-plus" style="font-size:15px"></i> Tambah Paket</button>
+    </div>
+  </div>
 </div>
 
 <!-- GANTI PASSWORD PANEL -->
@@ -677,6 +741,8 @@ let rekening=JSON.parse(localStorage.getItem('bwifi_rek')||'null')||[
   {nama:'Tripay',bank:'E-Wallet',norek:'Isi akun Tripay'},
 ];
 let waTemplate=localStorage.getItem('bwifi_watemplate')||'Halo *{nama}*, tagihan WiFi bulan *{bulan}* sebesar *{tagihan}* belum kami terima.\n\nMohon segera lakukan pembayaran. Bisa transfer ke:\n{rekening}\n\nTerima kasih 🙏';
+let paketList=JSON.parse(localStorage.getItem('bwifi_paket')||'[]');
+let nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;
 
 let data=JSON.parse(localStorage.getItem('bwifi_data')||'null')||[
   {id:101,nama:'Nazila',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
@@ -894,7 +960,7 @@ function connectFirestore(){
     _fbUnsub=docRef.onSnapshot(snap=>{
       if(_fbRetry){clearTimeout(_fbRetry);_fbRetry=null;}
       if(!snap.exists){
-        docRef.set({data:data,rekening:rekening,waTemplate:waTemplate});
+        docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList});
         fbReady=true;setSyncStatus('ok','Terhubung ✓');return;
       }
       const val=snap.data();
@@ -908,6 +974,7 @@ function connectFirestore(){
       if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
       if(val.authUser){_authUser=val.authUser;localStorage.setItem('bwifi_auth_user',val.authUser);}
       if(val.authPass){_authPass=val.authPass;localStorage.setItem('bwifi_auth_pass',val.authPass);}
+      if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem('bwifi_paket',JSON.stringify(paketList));}
       fbReady=true;setSyncStatus('ok','Tersinkron ✓');
     },err=>{
       setSyncStatus('err','Offline — mencoba ulang...');
@@ -948,7 +1015,7 @@ function save(){
   localStorage.setItem('bwifi_data',JSON.stringify(data));
   if(window._docRef){
     setSyncStatus('syncing','Menyimpan...');
-    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate})
+    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList})
       .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
       .catch(()=>{setSyncStatus('err','Gagal simpan — coba lagi');if(!fbReady)scheduleRetry();});
   }
@@ -1328,7 +1395,7 @@ function simpanRekening(){
   renderRekening();
   tutup('overlay-rek');
   if(fbReady&&window._docRef){
-    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate})
+    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList})
       .then(()=>setSyncStatus('ok','Rekening tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync'));
   }
   alert('Rekening & template pesan WA berhasil disimpan ✓');
@@ -1512,10 +1579,16 @@ function bukaListKoneksi(koneksi){
   document.getElementById('lk-title').textContent=lbl[koneksi]||koneksi;
   document.getElementById('lk-header').style.background=bg[koneksi]||'#185FA5';
   document.getElementById('lk-search').value='';
-  renderListKoneksi(list);
+  const isPppoe=koneksi==='pppoe';
+  const fab=document.getElementById('lk-fab');
+  const paketBtn=document.getElementById('lk-paket-btn');
+  fab.style.display=isPppoe?'flex':'none';
+  paketBtn.style.display=isPppoe?'inline-flex':'none';
+  renderListKoneksi(list,koneksi);
   document.getElementById('panel-list-koneksi').classList.add('show');
 }
-function renderListKoneksi(list){
+function renderListKoneksi(list,koneksi){
+  koneksi=koneksi||_lkKoneksi;
   const count=document.getElementById('lk-count');
   const body=document.getElementById('lk-body');
   count.textContent=list.length+' orang';
@@ -1523,29 +1596,144 @@ function renderListKoneksi(list){
   const statusClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C'};
   const statusLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
   if(!list.length){body.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Tidak ada pelanggan</p></div>';return;}
+  const isPppoe=koneksi==='pppoe';
   body.innerHTML=list.map((d,i)=>{
     const sisa=d.tagihan-(d.dibayar||0);
     const adaSisa=(d.dibayar||0)>0&&sisa>0;
     const needPay=d.status==='belum'||d.status==='hutang';
-    return`<div class="stat-detail-item">
-      <div class="stat-detail-num" style="background:#E6F1FB;color:#0C447C">${i+1}</div>
-      <div style="flex:1;min-width:0">
-        <div class="stat-detail-nama">${d.nama}${d.hp?`<a href="https://wa.me/${(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62')}" target="_blank" style="font-size:10px;color:#25D366;font-weight:500;margin-left:6px;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:11px;vertical-align:middle"></i> ${d.hp}</a>`:''}</div>
-        <div class="stat-detail-meta">
-          ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
-          ${(d.dibayar||0)>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
-          <span style="background:${statusBg[d.status]||'#eee'};color:${statusClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${statusLbl[d.status]||d.status}</span>
-        </div>
-        ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
-        ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
+    const paketObj=paketList.find(x=>String(x.id)===String(d.paket));
+    const waNum=(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
+    return`<div class="lk-card">
+      <div class="lk-card-nama">${i+1}. ${d.nama}
+        ${isPppoe&&d.nik?`<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">NIK: ${d.nik}</span>`:''}
+      </div>
+      <div class="lk-card-meta">
+        ${d.hp?`<a href="https://wa.me/${waNum}" target="_blank" style="color:#25D366;text-decoration:none;font-weight:500"><i class="ti ti-brand-whatsapp" style="font-size:11px;vertical-align:middle"></i> ${d.hp}</a>`:''}
+        ${isPppoe&&paketObj?`<span class="lk-card-paket"><i class="ti ti-package" style="font-size:10px"></i> ${paketObj.nama} — ${fRp(paketObj.harga)}</span>`:''}
+        ${d.tagihan>0&&!paketObj?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
+        ${isPppoe&&d.tglAktivasi?`<span><i class="ti ti-calendar-plus" style="font-size:10px"></i> Aktif: ${fTgl(d.tglAktivasi)}</span>`:''}
+        ${d.jatuhTempo?`<span><i class="ti ti-calendar-x" style="font-size:10px"></i> Tempo: ${fTgl(d.jatuhTempo)}</span>`:''}
+        <span style="background:${statusBg[d.status]||'#eee'};color:${statusClr[d.status]||'#333'};padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600">${statusLbl[d.status]||d.status}</span>
+      </div>
+      ${adaSisa?`<div class="stat-detail-sisa" style="margin-bottom:6px"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
+      <div class="lk-card-actions">
+        ${needPay?`<button class="lk-card-btn" style="background:var(--amber-l);color:var(--amber-d)" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
+        ${isPppoe?`<button class="lk-card-btn" style="background:var(--blue-l);color:var(--blue-d)" onclick="bukaFormPppoe(${d.id})"><i class="ti ti-edit" style="font-size:13px"></i> Edit</button>`:''}
+        ${d.hp?`<a class="lk-card-btn" href="https://wa.me/${waNum}" target="_blank" style="background:#e8fdf0;color:#1a7a45;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:13px"></i> WA</a>`:''}
       </div>
     </div>`;
   }).join('');
 }
 function filterListKoneksi(q){
   const s=q.trim().toLowerCase();
-  const filtered=s?_lkData.filter(d=>(d.nama||'').toLowerCase().includes(s)||(d.hp||'').toLowerCase().includes(s)||(d.alamat||'').toLowerCase().includes(s)):_lkData;
+  const filtered=s?_lkData.filter(d=>(d.nama||'').toLowerCase().includes(s)||(d.hp||'').toLowerCase().includes(s)||(d.alamat||'').toLowerCase().includes(s)||(d.nik||'').includes(s)):_lkData;
   renderListKoneksi(filtered);
+}
+
+/* ===== FORM PPPOE ===== */
+let _editPppoeId=null;
+function bukaFormPppoe(id){
+  _editPppoeId=id;
+  const ts=TODAY.toISOString().split('T')[0];
+  renderPaketDropdown();
+  if(id){
+    const d=data.find(x=>x.id===id);
+    if(!d)return;
+    document.getElementById('pppoe-judul').textContent='Edit Pelanggan PPPoE';
+    document.getElementById('pp-nama').value=d.nama;
+    document.getElementById('pp-nik').value=d.nik||'';
+    document.getElementById('pp-wa').value=d.hp||'';
+    document.getElementById('pp-paket').value=d.paket||'';
+    document.getElementById('pp-alamat').value=d.alamat||'';
+    document.getElementById('pp-catatan').value=d.catatan||'';
+    document.getElementById('pp-aktivasi').value=d.tglAktivasi||'';
+    document.getElementById('pp-tempo').value=d.jatuhTempo||'';
+    onPilihPaket();
+  }else{
+    document.getElementById('pppoe-judul').textContent='Tambah Pelanggan PPPoE';
+    ['pp-nama','pp-nik','pp-wa','pp-alamat','pp-catatan'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('pp-paket').value='';
+    document.getElementById('pp-aktivasi').value=ts;
+    document.getElementById('pp-tempo').value='';
+    document.getElementById('pp-paket-harga').textContent='';
+  }
+  document.getElementById('overlay-pppoe').classList.add('show');
+}
+function onPilihPaket(){
+  const sel=document.getElementById('pp-paket').value;
+  const p=paketList.find(x=>String(x.id)===sel);
+  document.getElementById('pp-paket-harga').textContent=p?'Harga: '+fRp(p.harga):'';
+}
+function renderPaketDropdown(){
+  const sel=document.getElementById('pp-paket');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">-- Pilih Paket --</option>'+paketList.map(p=>`<option value="${p.id}">${p.nama} — ${fRp(p.harga)}</option>`).join('');
+  sel.value=cur;
+}
+function simpanPppoe(){
+  const nama=document.getElementById('pp-nama').value.trim();
+  const nik=document.getElementById('pp-nik').value.trim();
+  const hp=document.getElementById('pp-wa').value.trim();
+  const paketId=document.getElementById('pp-paket').value;
+  const alamat=document.getElementById('pp-alamat').value.trim();
+  const catatan=document.getElementById('pp-catatan').value.trim();
+  const tglAktivasi=document.getElementById('pp-aktivasi').value;
+  const jatuhTempo=document.getElementById('pp-tempo').value;
+  if(!nama){alert('Nama wajib diisi.');return;}
+  const namaKey=nama.toLowerCase();
+  const duplikat=data.find(x=>x.nama.trim().toLowerCase()===namaKey&&x.id!==_editPppoeId);
+  if(duplikat){alert('Nama "'+duplikat.nama+'" sudah ada.');return;}
+  const paketObj=paketList.find(x=>String(x.id)===paketId);
+  const tagihan=paketObj?paketObj.harga:0;
+  const paket=paketId||'';
+  const obj={nama,nik,hp,alamat,catatan,tagihan,dibayar:0,status:'belum',via:'cash',koneksi:'pppoe',paket,tglAktivasi,jatuhTempo,tgl:''};
+  if(_editPppoeId){
+    const idx=data.findIndex(x=>x.id===_editPppoeId);
+    if(idx>=0){data[idx]={...data[idx],...obj,id:_editPppoeId,dibayar:data[idx].dibayar,status:data[idx].status,tgl:data[idx].tgl};}
+  }else{
+    data.push({id:nextId++,...obj});
+  }
+  save();renderData();tutup('overlay-pppoe');
+  bukaListKoneksi('pppoe');
+  if(activeTab==='rekap')renderRekap();
+}
+
+/* ===== KELOLA PAKET ===== */
+function bukaPanelPaket(){
+  renderPaketList();
+  document.getElementById('panel-paket').classList.add('show');
+}
+function renderPaketList(){
+  const el=document.getElementById('paket-list-render');
+  if(!paketList.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px 0">Belum ada paket. Tambahkan di bawah.</div>';return;}
+  el.innerHTML=paketList.map(p=>`<div class="paket-item">
+    <div class="paket-item-info">
+      <div class="paket-item-nama">${p.nama}</div>
+      <div class="paket-item-harga">${fRp(p.harga)} / bulan</div>
+    </div>
+    <button class="paket-item-del" onclick="hapusPaket(${p.id})"><i class="ti ti-trash" style="font-size:13px"></i></button>
+  </div>`).join('');
+}
+function tambahPaket(){
+  const nama=document.getElementById('np-nama').value.trim();
+  const harga=parseInt(document.getElementById('np-harga').value)||0;
+  if(!nama){alert('Nama paket wajib diisi.');return;}
+  if(!harga){alert('Harga paket wajib diisi.');return;}
+  paketList.push({id:nextPaketId++,nama,harga});
+  localStorage.setItem('bwifi_paket',JSON.stringify(paketList));
+  if(window._docRef)window._docRef.set({paketList:paketList},{merge:true});
+  document.getElementById('np-nama').value='';
+  document.getElementById('np-harga').value='';
+  renderPaketList();
+  renderPaketDropdown();
+}
+function hapusPaket(id){
+  if(!confirm('Hapus paket ini?'))return;
+  paketList=paketList.filter(p=>p.id!==id);
+  localStorage.setItem('bwifi_paket',JSON.stringify(paketList));
+  if(window._docRef)window._docRef.set({paketList:paketList},{merge:true});
+  renderPaketList();
+  renderPaketDropdown();
 }
 
 /* ===== PETA ===== */
