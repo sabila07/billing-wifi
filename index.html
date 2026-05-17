@@ -1093,14 +1093,17 @@ function simpan(){
   const hp=document.getElementById('f-hp').value.trim();
   const alamat=document.getElementById('f-alamat').value.trim();
   const tagihan=parseInt(document.getElementById('f-tagihan').value)||0;
+  const status=document.getElementById('f-status').value;
   const dibayarRaw=document.getElementById('f-dibayar').value;
   const dibayar=dibayarRaw===''?(status==='lunas'?tagihan:0):parseInt(dibayarRaw)||0;
-  const status=document.getElementById('f-status').value;
   const via=document.getElementById('f-via').value;
   const jatuhTempo=document.getElementById('f-jatuh-tempo').value;
   const tgl=document.getElementById('f-tgl').value;
   const catatan=document.getElementById('f-catatan').value.trim();
   if(!nama){alert('Nama wajib diisi.');return;}
+  const namaKey=nama.toLowerCase();
+  const duplikat=data.find(x=>x.nama.trim().toLowerCase()===namaKey&&x.id!==editId);
+  if(duplikat){alert('Nama "'+duplikat.nama+'" sudah ada di daftar. Gunakan nama berbeda atau tambahkan keterangan (contoh: Budi (2)).');return;}
   const obj={nama,hp,alamat,tagihan,dibayar,status,via,jatuhTempo,tgl,catatan};
   if(editId){const idx=data.findIndex(x=>x.id===editId);data[idx]={id:editId,...obj};}
   else{data.push({id:nextId++,...obj});}
