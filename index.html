@@ -158,7 +158,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .btn-batal{height:30px;padding:0 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--amber-m);background:var(--amber-l);color:var(--amber-d);display:flex;align-items:center;gap:3px;font-family:var(--font)}
 .btn-batal:active{background:var(--amber-m)}
 /* QUICK-PAY POPUP */
-.qpay-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:flex-end}
+.qpay-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);align-items:flex-end}
 .qpay-overlay.show{display:flex}
 .qpay-sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;padding:0 0 env(safe-area-inset-bottom,20px)}
 .qpay-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto}
@@ -1015,7 +1015,7 @@ function renderStatBody(list,status){
     return`<div class="stat-detail-item">
       <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua}">${i+1}</div>
       <div style="flex:1;min-width:0">
-        <div class="stat-detail-nama">${d.nama}${d.hp?`<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">${d.hp}</span>`:''}</div>
+        <div class="stat-detail-nama">${d.nama}${d.hp?`<a href="https://wa.me/${(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62')}" target="_blank" style="font-size:10px;color:#25D366;font-weight:500;margin-left:6px;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:11px;vertical-align:middle"></i> ${d.hp}</a>`:''}</div>
         <div class="stat-detail-meta">
           ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
           ${d.dibayar>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
@@ -1194,6 +1194,7 @@ function batalLunas(id){
 let qpayId=null,qpayVia='cash';
 function bukaQpay(id){bukaBayarCepat(id);}
 function bukaBayarCepat(id){
+  id=isNaN(id)?id:+id;
   const d=data.find(x=>x.id===id);
   if(!d||d.status==='lunas')return;
   qpayId=id;qpayVia='cash';
