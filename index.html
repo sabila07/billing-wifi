@@ -233,9 +233,41 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .stat-search-rel{position:relative}
 .stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
 .stat-bayar-btn:active{opacity:.85}
+/* LOGIN */
+#login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
+#login-screen.show{display:flex}
+.login-card{background:#fff;border-radius:20px;padding:28px 24px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+.login-logo i{font-size:32px;color:#0F6E56}
+.login-logo span{font-size:20px;font-weight:700;color:#0F6E56}
+.login-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px;text-align:center}
+.login-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px}
+.login-field{margin-bottom:13px}
+.login-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.login-field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);outline:none;color:var(--text);background:var(--bg);transition:border .2s}
+.login-field input:focus{border-color:#0F6E56;background:#fff}
+.login-err{color:#A32D2D;font-size:12px;text-align:center;min-height:18px;margin-bottom:8px;font-weight:500}
+.login-btn{width:100%;padding:13px;background:#0F6E56;color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:.3px}
+.login-btn:active{background:#085041}
+/* GANTI PASSWORD */
+.hmenu-auth{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;gap:8px}
+.hmenu-auth-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font)}
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><i class="ti ti-wifi"></i><span>IURAN WIFI</span></div>
+    <div class="login-title">Selamat Datang</div>
+    <div class="login-sub">Masukkan username dan password untuk melanjutkan</div>
+    <div class="login-field"><label>Username</label><input id="login-user" type="text" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"/></div>
+    <div class="login-field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')cekLogin()"/></div>
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="cekLogin()">Masuk</button>
+  </div>
+</div>
 
 <div class="topbar">
   <div class="topbar-title" onclick="bukaHomeMenu()" style="cursor:pointer">
@@ -448,6 +480,29 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       </div>
       <div id="hmenu-rek-list"></div>
     </div>
+    <div class="hmenu-auth">
+      <button class="hmenu-auth-btn" style="background:var(--blue-l);color:var(--blue-d)" onclick="bukaGantiPassword();tutupHomeMenu()"><i class="ti ti-lock" style="font-size:14px"></i> Ganti Password</button>
+      <button class="hmenu-auth-btn" style="background:var(--red-l);color:var(--red-d)" onclick="logout()"><i class="ti ti-logout" style="font-size:14px"></i> Keluar</button>
+    </div>
+  </div>
+</div>
+
+<!-- GANTI PASSWORD PANEL -->
+<div class="page-overlay" id="panel-ganti-password">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-ganti-password')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-lock" style="font-size:20px"></i>
+    <span class="page-title">Ganti Password</span>
+  </div>
+  <div class="page-body">
+    <div class="section-lbl">Kredensial Login</div>
+    <div class="card" style="padding:16px;margin-bottom:12px">
+      <div class="fg"><label>Username</label><input type="text" id="gp-user" placeholder="Username baru" autocomplete="off"/></div>
+      <div class="fg"><label>Password Lama</label><input type="password" id="gp-old" placeholder="Password saat ini" autocomplete="off"/></div>
+      <div class="fg"><label>Password Baru</label><input type="password" id="gp-new" placeholder="Password baru" autocomplete="new-password"/></div>
+      <div class="fg"><label>Ulangi Password Baru</label><input type="password" id="gp-new2" placeholder="Ulangi password baru" autocomplete="new-password"/></div>
+    </div>
+    <button class="btn-simpan" onclick="simpanPassword()"><i class="ti ti-check" style="font-size:16px"></i> Simpan Password</button>
   </div>
 </div>
 
@@ -683,6 +738,58 @@ let nextId=Math.max(...data.map(d=>d.id))+1;
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
+/* ===== AUTH ===== */
+let _authUser=localStorage.getItem('bwifi_auth_user')||'admin';
+let _authPass=localStorage.getItem('bwifi_auth_pass')||'wifi1234';
+function cekLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  if(!u||!p){err.textContent='Username dan password wajib diisi.';return;}
+  if(u===_authUser&&p===_authPass){
+    sessionStorage.setItem('bwifi_session','1');
+    document.getElementById('login-screen').classList.remove('show');
+  } else {
+    err.textContent='Username atau password salah.';
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-pass').focus();
+  }
+}
+function logout(){
+  sessionStorage.removeItem('bwifi_session');
+  location.reload();
+}
+function bukaGantiPassword(){
+  document.getElementById('gp-user').value=_authUser;
+  document.getElementById('gp-old').value='';
+  document.getElementById('gp-new').value='';
+  document.getElementById('gp-new2').value='';
+  document.getElementById('panel-ganti-password').classList.add('show');
+}
+function simpanPassword(){
+  const user=document.getElementById('gp-user').value.trim();
+  const oldP=document.getElementById('gp-old').value;
+  const newP=document.getElementById('gp-new').value;
+  const newP2=document.getElementById('gp-new2').value;
+  if(!user){alert('Username tidak boleh kosong.');return;}
+  if(oldP!==_authPass){alert('Password lama tidak sesuai.');return;}
+  if(!newP){alert('Password baru tidak boleh kosong.');return;}
+  if(newP!==newP2){alert('Ulangi password tidak cocok.');return;}
+  if(newP.length<6){alert('Password minimal 6 karakter.');return;}
+  _authUser=user;_authPass=newP;
+  localStorage.setItem('bwifi_auth_user',user);
+  localStorage.setItem('bwifi_auth_pass',newP);
+  if(window._docRef)window._docRef.set({authUser:user,authPass:newP},{merge:true});
+  tutupPanel('panel-ganti-password');
+  alert('Password berhasil diubah!');
+}
+(function initAuth(){
+  if(!sessionStorage.getItem('bwifi_session')){
+    document.getElementById('login-screen').classList.add('show');
+    setTimeout(()=>document.getElementById('login-user').focus(),100);
+  }
+})();
+
 let fbReady=false,_fbUnsub=null,_fbRetry=null;
 const FB_CONFIG={
   apiKey:"AIzaSyD4de2BdUFmVEEnigAKJQxCTEINMCJyeH0",
@@ -727,6 +834,8 @@ function connectFirestore(){
       }
       if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
       if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
+      if(val.authUser){_authUser=val.authUser;localStorage.setItem('bwifi_auth_user',val.authUser);}
+      if(val.authPass){_authPass=val.authPass;localStorage.setItem('bwifi_auth_pass',val.authPass);}
       fbReady=true;setSyncStatus('ok','Tersinkron ✓');
     },err=>{
       setSyncStatus('err','Offline — mencoba ulang...');
