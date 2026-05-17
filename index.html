@@ -226,6 +226,13 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .stat-detail-nama{font-size:13px;font-weight:600;margin-bottom:3px}
 .stat-detail-meta{display:flex;gap:8px;font-size:11px;color:var(--muted);flex-wrap:wrap;line-height:1.8}
 .stat-detail-sisa{background:var(--red-l);color:var(--red-d);font-size:11px;font-weight:600;padding:3px 8px;border-radius:var(--radius-sm);margin-top:4px;display:inline-flex;align-items:center;gap:3px}
+.stat-search-wrap{padding:10px 16px 6px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
+.stat-search-input{width:100%;padding:9px 12px 9px 36px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font);outline:none;background:#F4F6F5;color:var(--text)}
+.stat-search-input:focus{border-color:var(--green);background:#fff}
+.stat-search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none}
+.stat-search-rel{position:relative}
+.stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
+.stat-bayar-btn:active{opacity:.85}
 </style>
 </head>
 <body>
@@ -450,6 +457,12 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <button class="page-back" onclick="tutupPanel('panel-stat-detail')"><i class="ti ti-arrow-left"></i></button>
     <span class="page-title" id="stat-detail-title">Detail</span>
     <span id="stat-detail-count" style="margin-left:auto;background:rgba(255,255,255,.22);padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600"></span>
+  </div>
+  <div class="stat-search-wrap">
+    <div class="stat-search-rel">
+      <i class="ti ti-search stat-search-icon"></i>
+      <input class="stat-search-input" id="stat-search-input" type="text" placeholder="Cari nama, HP, atau alamat…" oninput="filterStatDetail(this.value)"/>
+    </div>
   </div>
   <div class="page-body" id="stat-detail-body"></div>
 </div>
@@ -981,39 +994,57 @@ function setSubMenu(menu,cls){
   document.getElementById('sm-'+menu).className='smenu-btn '+cls;
   renderData();
 }
-function bukaStatDetail(status,label){
-  const bg={lunas:'#0F6E56',belum:'#BA7517',hutang:'#A32D2D',ropel:'#185FA5',semua:'#0F6E56'};
-  const numBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1FB',semua:'#EAF3DE'};
-  const numClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C',semua:'#085041'};
-  const lbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
-  const filtered=status==='semua'?[...data]:data.filter(d=>d.status===status);
-  filtered.sort((a,b)=>a.nama.localeCompare(b.nama));
-  document.getElementById('stat-detail-title').textContent=label;
-  document.getElementById('stat-detail-count').textContent=filtered.length+' orang';
-  document.getElementById('stat-detail-header').style.background=bg[status]||bg.semua;
+const _statBg={lunas:'#0F6E56',belum:'#BA7517',hutang:'#A32D2D',ropel:'#185FA5',semua:'#0F6E56'};
+const _statNumBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1FB',semua:'#EAF3DE'};
+const _statNumClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C',semua:'#085041'};
+const _statLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+let _statData=[],_currentStatStatus='';
+
+function renderStatBody(list,status){
   const body=document.getElementById('stat-detail-body');
-  if(!filtered.length){
+  document.getElementById('stat-detail-count').textContent=list.length+' orang';
+  if(!list.length){
     body.innerHTML='<div class="empty"><i class="ti ti-users"></i><p>Tidak ada data</p></div>';
-  } else {
-    body.innerHTML=filtered.map((d,i)=>{
-      const sisa=d.tagihan-d.dibayar;
-      const adaSisa=d.dibayar>0&&sisa>0;
-      return`<div class="stat-detail-item">
-        <div class="stat-detail-num" style="background:${numBg[status]||numBg.semua};color:${numClr[status]||numClr.semua}">${i+1}</div>
-        <div style="flex:1;min-width:0">
-          <div class="stat-detail-nama">${d.nama}${d.hp?`<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">${d.hp}</span>`:''}</div>
-          <div class="stat-detail-meta">
-            ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
-            ${d.dibayar>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
-            ${d.tgl?`<span>Tgl: ${fTgl(d.tgl)}</span>`:''}
-            <span style="background:${numBg[d.status]||'#eee'};color:${numClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${lbl[d.status]||d.status}</span>
-            <span style="font-size:10px">${d.via==='cash'?'💵':'🏦'} ${d.via==='cash'?'Cash':'Transfer'}</span>
-          </div>
-          ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
-        </div>
-      </div>`;
-    }).join('');
+    return;
   }
+  const canPay=status==='belum'||status==='hutang'||status==='semua';
+  body.innerHTML=list.map((d,i)=>{
+    const sisa=d.tagihan-d.dibayar;
+    const adaSisa=d.dibayar>0&&sisa>0;
+    const needPay=canPay&&(d.status==='belum'||d.status==='hutang');
+    return`<div class="stat-detail-item">
+      <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua}">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div class="stat-detail-nama">${d.nama}${d.hp?`<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">${d.hp}</span>`:''}</div>
+        <div class="stat-detail-meta">
+          ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
+          ${d.dibayar>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
+          ${d.tgl?`<span>Tgl: ${fTgl(d.tgl)}</span>`:''}
+          <span style="background:${_statNumBg[d.status]||'#eee'};color:${_statNumClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${_statLbl[d.status]||d.status}</span>
+          <span style="font-size:10px">${d.via==='cash'?'💵':'🏦'} ${d.via==='cash'?'Cash':'Transfer'}</span>
+        </div>
+        ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
+        ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterStatDetail(q){
+  const s=q.trim().toLowerCase();
+  const filtered=s?_statData.filter(d=>(d.nama||'').toLowerCase().includes(s)||(d.hp||'').toLowerCase().includes(s)||(d.alamat||'').toLowerCase().includes(s)):_statData;
+  renderStatBody(filtered,_currentStatStatus);
+}
+
+function bukaStatDetail(status,label){
+  const all=status==='semua'?[...data]:data.filter(d=>d.status===status);
+  all.sort((a,b)=>a.nama.localeCompare(b.nama));
+  _statData=all;
+  _currentStatStatus=status;
+  document.getElementById('stat-detail-title').textContent=label;
+  document.getElementById('stat-detail-header').style.background=_statBg[status]||_statBg.semua;
+  document.getElementById('stat-search-input').value='';
+  renderStatBody(all,status);
   document.getElementById('panel-stat-detail').classList.add('show');
 }
 
@@ -1161,6 +1192,7 @@ function batalLunas(id){
 
 /* QUICK-PAY */
 let qpayId=null,qpayVia='cash';
+function bukaQpay(id){bukaBayarCepat(id);}
 function bukaBayarCepat(id){
   const d=data.find(x=>x.id===id);
   if(!d||d.status==='lunas')return;
@@ -1229,6 +1261,13 @@ function konfirmasiBayar(){
   renderData();
   if(activeTab==='rekap')renderRekap();
   if(activeTab==='analisa')renderAnalisa();
+  if(document.getElementById('panel-stat-detail').classList.contains('show')){
+    const q=document.getElementById('stat-search-input').value;
+    const all=_currentStatStatus==='semua'?[...data]:data.filter(x=>x.status===_currentStatStatus);
+    all.sort((a,b)=>a.nama.localeCompare(b.nama));
+    _statData=all;
+    filterStatDetail(q);
+  }
   const toast=document.createElement('div');
   const isLunas=sisa<=0;
   toast.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);background:'+(isLunas?'#0F6E56':'#BA7517');
