@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Billing WiFi"/>
-<title>Billing WiFi</title>
+<meta name="apple-mobile-web-app-title" content="Iuran WiFi"/>
+<title>Iuran WiFi</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -222,7 +222,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div class="topbar">
   <div class="topbar-title" onclick="bukaHomeMenu()" style="cursor:pointer">
     <i class="ti ti-home"></i>
-    <div><h1>Billing WiFi</h1><div class="topbar-sub">Kelola tagihan pelanggan</div></div>
+    <div><h1>IURAN WIFI</h1><div class="topbar-sub">Kelola iuran pelanggan</div></div>
   </div>
   <div class="topbar-btns">
     <div id="sync-dot" title="Status sync"></div>
@@ -233,13 +233,12 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div class="sync-bar" id="sync-bar"><i class="ti ti-cloud-upload" style="font-size:13px"></i><span id="sync-msg">Menyambung...</span></div>
 
 <div class="hero">
-  <div class="hero-label">Total saldo keseluruhan</div>
+  <div class="hero-label">Total Saldo Masuk (Cash + Transfer)</div>
   <div class="hero-saldo" id="hero-saldo">Rp 0</div>
   <div class="hero-row">
-    <div class="hero-chip"><div class="lbl">Masuk</div><div class="val" id="h-masuk">Rp 0</div></div>
     <div class="hero-chip"><div class="lbl">Cash</div><div class="val" id="h-cash">Rp 0</div></div>
     <div class="hero-chip"><div class="lbl">Transfer</div><div class="val" id="h-transfer">Rp 0</div></div>
-    <div class="hero-chip"><div class="lbl">Nunggak</div><div class="val" id="h-nunggak" style="color:#FAC775">Rp 0</div></div>
+    <div class="hero-chip"><div class="lbl">Blm Terealisasi</div><div class="val" id="h-nunggak" style="color:#FAC775">Rp 0</div></div>
     <div class="hero-chip"><div class="lbl">Pelanggan</div><div class="val" id="h-total">0</div></div>
   </div>
 </div>
@@ -932,13 +931,13 @@ function updateStats(){
   document.getElementById('jml-belum').textContent=data.filter(d=>d.status==='belum').length;
   document.getElementById('jml-hutang').textContent=data.filter(d=>d.status==='hutang').length;
   document.getElementById('jml-ropel').textContent=data.filter(d=>d.status==='ropel').length;
-  const total=data.reduce((s,d)=>s+d.tagihan,0);
-  const masuk=data.reduce((s,d)=>s+d.dibayar,0);
-  document.getElementById('hero-saldo').textContent=fRp(total);
-  document.getElementById('h-masuk').textContent=fRp(masuk);
-  document.getElementById('h-cash').textContent=fRp(data.filter(d=>d.via==='cash').reduce((s,d)=>s+d.dibayar,0));
-  document.getElementById('h-transfer').textContent=fRp(data.filter(d=>d.via==='transfer').reduce((s,d)=>s+d.dibayar,0));
-  document.getElementById('h-nunggak').textContent=fRp(data.filter(d=>d.status==='belum'||d.status==='hutang').reduce((s,d)=>s+(d.tagihan-d.dibayar),0));
+  const cash=data.filter(d=>d.via==='cash').reduce((s,d)=>s+d.dibayar,0);
+  const transfer=data.filter(d=>d.via==='transfer').reduce((s,d)=>s+d.dibayar,0);
+  const belumTerealisasi=data.filter(d=>d.status==='belum'||d.status==='hutang').reduce((s,d)=>s+(d.tagihan-d.dibayar),0);
+  document.getElementById('hero-saldo').textContent=fRp(cash+transfer);
+  document.getElementById('h-cash').textContent=fRp(cash);
+  document.getElementById('h-transfer').textContent=fRp(transfer);
+  document.getElementById('h-nunggak').textContent=fRp(belumTerealisasi);
   document.getElementById('h-total').textContent=data.length;
 }
 function updateNotif(){
