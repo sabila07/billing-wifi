@@ -1017,7 +1017,7 @@ function simpan(){
   const alamat=document.getElementById('f-alamat').value.trim();
   const tagihan=parseInt(document.getElementById('f-tagihan').value)||0;
   const dibayarRaw=document.getElementById('f-dibayar').value;
-  const dibayar=dibayarRaw===''?tagihan:parseInt(dibayarRaw)||0;
+  const dibayar=dibayarRaw===''?(status==='lunas'?tagihan:0):parseInt(dibayarRaw)||0;
   const status=document.getElementById('f-status').value;
   const via=document.getElementById('f-via').value;
   const jatuhTempo=document.getElementById('f-jatuh-tempo').value;
