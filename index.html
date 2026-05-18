@@ -327,7 +327,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div class="sync-bar" id="sync-bar"><i class="ti ti-cloud-upload" style="font-size:13px"></i><span id="sync-msg">Menyambung...</span></div>
 
 <div class="hero">
-  <div class="hero-label">Total Saldo Masuk (Cash + Transfer)</div>
+  <div class="hero-label">Total Saldo Masuk (Cash)</div>
   <div class="hero-saldo" id="hero-saldo">Rp 0</div>
   <div class="hero-row">
     <div class="hero-chip"><div class="lbl">Cash</div><div class="val" id="h-cash">Rp 0</div></div>
@@ -1301,7 +1301,7 @@ function updateStats(){
   const cash=data.filter(d=>d.via==='cash').reduce((s,d)=>s+d.dibayar,0);
   const transfer=data.filter(d=>d.via==='transfer').reduce((s,d)=>s+d.dibayar,0);
   const belumTerealisasi=data.filter(d=>d.status==='belum'||d.status==='hutang').reduce((s,d)=>s+(d.tagihan-d.dibayar),0);
-  document.getElementById('hero-saldo').textContent=fRp(cash+transfer);
+  document.getElementById('hero-saldo').textContent=fRp(cash);
   document.getElementById('h-cash').textContent=fRp(cash);
   document.getElementById('h-transfer').textContent=fRp(transfer);
   document.getElementById('h-nunggak').textContent=fRp(belumTerealisasi);
