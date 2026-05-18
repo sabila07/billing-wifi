@@ -169,6 +169,16 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .qpay-via{display:flex;gap:8px;margin-bottom:16px}
 .qpay-via-btn{flex:1;height:48px;border-radius:var(--radius);border:2px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;transition:border-color .15s,background .15s}
 .qpay-via-btn.selected{border-color:var(--green);background:var(--green-l);color:var(--green-d)}
+.qpay-rek-wrap{display:none;margin-bottom:14px}
+.qpay-rek-wrap.show{display:block}
+.qpay-rek-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.qpay-rek-list{display:flex;flex-direction:column;gap:7px}
+.qpay-rek-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:#fff;transition:border-color .15s,background .15s}
+.qpay-rek-item.selected{border-color:var(--blue);background:var(--blue-l)}
+.qpay-rek-item.selected .qpay-rek-check{background:var(--blue);border-color:var(--blue);color:#fff}
+.qpay-rek-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s}
+.qpay-rek-nama{font-size:13px;font-weight:600;flex:1}
+.qpay-rek-bank{font-size:11px;color:var(--muted)}
 .qpay-tgl{margin-bottom:16px}
 .qpay-tgl label{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
 .qpay-tgl input{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--font);padding:0 12px;outline:none}
@@ -476,6 +486,10 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       <div class="qpay-via">
         <button class="qpay-via-btn selected" id="qp-cash" onclick="pilihVia('cash')">💵 Cash</button>
         <button class="qpay-via-btn" id="qp-transfer" onclick="pilihVia('transfer')">🏦 Transfer</button>
+      </div>
+      <div class="qpay-rek-wrap" id="qpay-rek-wrap">
+        <div class="qpay-rek-label">Pilih Rekening Tujuan</div>
+        <div class="qpay-rek-list" id="qpay-rek-list"></div>
       </div>
       <div class="qpay-jumlah">
         <label>Jumlah Dibayar (Rp)</label>
@@ -1663,10 +1677,36 @@ function updateQpaySisa(){
     btnEl.innerHTML='<i class="ti ti-check" style="font-size:18px"></i> Konfirmasi Lunas';
   }
 }
+let _qpayRekId=null;
 function pilihVia(v){
   qpayVia=v;
   document.getElementById('qp-cash').className='qpay-via-btn'+(v==='cash'?' selected':'');
   document.getElementById('qp-transfer').className='qpay-via-btn'+(v==='transfer'?' selected':'');
+  const wrap=document.getElementById('qpay-rek-wrap');
+  if(v==='transfer'){
+    const list=rekening.filter(r=>r.nama);
+    if(list.length){
+      wrap.classList.add('show');
+      _qpayRekId=null;
+      document.getElementById('qpay-rek-list').innerHTML=list.map((r,i)=>`
+        <div class="qpay-rek-item" id="qprek-${i}" onclick="pilihRekBayar(${i})">
+          <div class="qpay-rek-check"><i class="ti ti-check" style="font-size:11px"></i></div>
+          <div>
+            <div class="qpay-rek-nama">${i+1}. ${r.nama}</div>
+            <div class="qpay-rek-bank">${r.bank||''}${r.norek?' — '+r.norek:''}</div>
+          </div>
+        </div>`).join('');
+    }
+  }else{
+    wrap.classList.remove('show');
+    _qpayRekId=null;
+  }
+}
+function pilihRekBayar(idx){
+  _qpayRekId=idx;
+  document.querySelectorAll('.qpay-rek-item').forEach((el,i)=>{
+    el.classList.toggle('selected',i===idx);
+  });
 }
 function qpayOverlayClick(e){if(e.target===document.getElementById('qpay-overlay'))document.getElementById('qpay-overlay').classList.remove('show');}
 function konfirmasiBayar(){
@@ -1676,6 +1716,7 @@ function konfirmasiBayar(){
   if(!tgl){alert('Pilih tanggal bayar dulu.');return;}
   const input=parseInt(document.getElementById('qp-dibayar').value)||0;
   if(input<=0){alert('Masukkan jumlah yang dibayar.');return;}
+  if(qpayVia==='transfer'&&_qpayRekId===null){alert('Pilih rekening tujuan transfer dulu.');return;}
   const sudah=d.dibayar||0;
   const totalDibayar=sudah+input;
   const sisa=d.tagihan-totalDibayar;
@@ -1683,6 +1724,7 @@ function konfirmasiBayar(){
   d.status=sisa<=0?'lunas':'hutang';
   d.via=qpayVia;
   d.tgl=tgl;
+  if(qpayVia==='transfer'&&_qpayRekId!==null){const r=rekening[_qpayRekId];d.rekTujuan=r?r.nama:'';}else{d.rekTujuan='';}
   save();
   document.getElementById('qpay-overlay').classList.remove('show');
   renderData();
