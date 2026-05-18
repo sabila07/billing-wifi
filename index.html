@@ -249,6 +249,9 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .dp-card-sub{font-size:11px;opacity:.8}
 .stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
 .stat-bayar-btn:active{opacity:.85}
+.stat-check-btn{width:30px;height:30px;border-radius:7px;border:2px solid #C0DD97;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s;font-size:18px;color:transparent;margin-top:2px}
+.stat-check-btn.checked{background:#0F6E56;border-color:#0F6E56;color:#fff}
+.stat-check-btn:active{transform:scale(.9)}
 #overlay-pppoe{z-index:410}
 /* LOGIN */
 #login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
@@ -1268,7 +1271,9 @@ function renderStatBody(list,status){
     const sisa=d.tagihan-d.dibayar;
     const adaSisa=d.dibayar>0&&sisa>0;
     const needPay=canPay&&(d.status==='belum'||d.status==='hutang');
-    return`<div class="stat-detail-item">
+    const isLunas=d.status==='lunas';
+    const checked=d.dikonfirmasi?true:false;
+    return`<div class="stat-detail-item" style="align-items:center">
       <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua}">${i+1}</div>
       <div style="flex:1;min-width:0">
         <div class="stat-detail-nama">${d.nama}${d.hp?`<a href="https://wa.me/${(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62')}" target="_blank" style="font-size:10px;color:#25D366;font-weight:500;margin-left:6px;text-decoration:none"><i class="ti ti-brand-whatsapp" style="font-size:11px;vertical-align:middle"></i> ${d.hp}</a>`:''}</div>
@@ -1277,11 +1282,12 @@ function renderStatBody(list,status){
           ${d.dibayar>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
           ${d.tgl?`<span>Tgl: ${fTgl(d.tgl)}</span>`:''}
           <span style="background:${_statNumBg[d.status]||'#eee'};color:${_statNumClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${_statLbl[d.status]||d.status}</span>
-          <span style="font-size:10px">${d.via==='cash'?'💵':'🏦'} ${d.via==='cash'?'Cash':'Transfer'}</span>
+          ${!isLunas?`<span style="font-size:10px">${d.via==='cash'?'💵':'🏦'} ${d.via==='cash'?'Cash':'Transfer'}</span>`:''}
         </div>
         ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
         ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
       </div>
+      ${isLunas?`<button class="stat-check-btn${checked?' checked':''}" onclick="toggleKonfirmasi(${d.id})" title="${checked?'Sudah dikonfirmasi':'Tandai sudah diterima'}"><i class="ti ti-check" style="font-size:16px"></i></button>`:''}
     </div>`;
   }).join('');
 }
@@ -1290,6 +1296,20 @@ function filterStatDetail(q){
   const s=q.trim().toLowerCase();
   const filtered=s?_statData.filter(d=>(d.nama||'').toLowerCase().includes(s)||(d.hp||'').toLowerCase().includes(s)||(d.alamat||'').toLowerCase().includes(s)):_statData;
   renderStatBody(filtered,_currentStatStatus);
+}
+
+function toggleKonfirmasi(id){
+  id=isNaN(id)?id:+id;
+  const d=data.find(x=>x.id===id);
+  if(!d)return;
+  d.dikonfirmasi=!d.dikonfirmasi;
+  save();
+  // Update hanya tombol yang diklik tanpa re-render seluruh list
+  const btn=document.querySelector(`.stat-check-btn[onclick="toggleKonfirmasi(${id})"]`);
+  if(btn){
+    btn.classList.toggle('checked',d.dikonfirmasi);
+    btn.title=d.dikonfirmasi?'Sudah dikonfirmasi':'Tandai sudah diterima';
+  }
 }
 
 function bukaStatDetail(status,label){
