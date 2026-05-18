@@ -250,9 +250,21 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .dp-card-sub{font-size:11px;opacity:.8}
 .stat-bayar-btn{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font);background:#BA7517;color:#fff}
 .stat-bayar-btn:active{opacity:.85}
-.stat-check-btn{width:30px;height:30px;border-radius:7px;border:2px solid #C0DD97;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s;font-size:18px;color:transparent;margin-top:2px}
-.stat-check-btn.checked{background:#0F6E56;border-color:#0F6E56;color:#fff}
-.stat-check-btn:active{transform:scale(.9)}
+.stat-check-btn{width:28px;height:28px;border-radius:7px;border:2px solid #C0DD97;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;color:transparent;margin-top:3px}
+.stat-check-btn.checked{color:#fff}
+.stat-check-btn:active{transform:scale(.88)}
+/* Selector hutang (kotak pilih WA) */
+.stat-sel-btn{width:28px;height:28px;border-radius:7px;border:2px solid #d0d0d0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;color:transparent;margin-top:3px}
+.stat-sel-btn.selected{background:#A32D2D;border-color:#A32D2D;color:#fff}
+.stat-sel-btn:active{transform:scale(.88)}
+/* Floating WA bar */
+.wa-select-bar{display:none;position:sticky;bottom:0;left:0;right:0;background:#0F6E56;padding:10px 16px;align-items:center;justify-content:space-between;gap:10px;z-index:5;box-shadow:0 -3px 12px rgba(0,0,0,.15)}
+.wa-select-bar.show{display:flex}
+.wa-select-info{color:#fff;font-size:13px;font-weight:600}
+.wa-select-info span{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 10px;margin-left:6px}
+.wa-select-actions{display:flex;gap:8px}
+.wa-send-btn{background:#25D366;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
+.wa-clear-btn{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:20px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
 #overlay-pppoe{z-index:410}
 /* LOGIN */
 #login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
@@ -659,7 +671,14 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       <input class="stat-search-input" id="stat-search-input" type="text" placeholder="Cari nama, HP, atau alamat…" oninput="filterStatDetail(this.value)"/>
     </div>
   </div>
-  <div class="page-body" id="stat-detail-body"></div>
+  <div class="page-body" id="stat-detail-body" style="padding-bottom:70px"></div>
+  <div class="wa-select-bar" id="wa-select-bar">
+    <div class="wa-select-info"><i class="ti ti-checkbox" style="font-size:15px;vertical-align:middle"></i> Terpilih<span id="wa-select-count">0</span></div>
+    <div class="wa-select-actions">
+      <button class="wa-clear-btn" onclick="clearSeleksiWA()">Batal</button>
+      <button class="wa-send-btn" onclick="kirimWASeleksi()"><i class="ti ti-brand-whatsapp" style="font-size:15px"></i> Kirim WA</button>
+    </div>
+  </div>
 </div>
 
 <!-- SERVER PANEL -->
@@ -1279,6 +1298,50 @@ const _statNumBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1F
 const _statNumClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C',semua:'#085041'};
 const _statLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
 let _statData=[],_currentStatStatus='';
+let _waSeleksi=new Set();
+
+function toggleSeleksiWA(id,hasHp){
+  id=isNaN(id)?id:+id;
+  if(!hasHp){alert('Pelanggan ini tidak memiliki nomor WhatsApp.');return;}
+  const btn=document.getElementById('sel-'+id);
+  if(_waSeleksi.has(id)){_waSeleksi.delete(id);btn&&btn.classList.remove('selected');}
+  else{_waSeleksi.add(id);btn&&btn.classList.add('selected');}
+  updateWABar();
+}
+function updateWABar(){
+  const bar=document.getElementById('wa-select-bar');
+  const cnt=document.getElementById('wa-select-count');
+  if(!bar)return;
+  if(_waSeleksi.size>0){bar.classList.add('show');cnt.textContent=_waSeleksi.size;}
+  else{bar.classList.remove('show');}
+}
+function clearSeleksiWA(){
+  _waSeleksi.clear();
+  document.querySelectorAll('.stat-sel-btn.selected').forEach(b=>b.classList.remove('selected'));
+  updateWABar();
+}
+function kirimWASeleksi(){
+  const ids=[..._waSeleksi];
+  if(!ids.length)return;
+  const bulan=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  let rekStr='';
+  if(rekening&&rekening.length){rekStr=rekening.filter(r=>r.norek).map(r=>`${r.bank}: ${r.norek} (${r.nama})`).join('\n');}
+  let delay=0;
+  ids.forEach(id=>{
+    const d=data.find(x=>x.id===id);
+    if(!d||!d.hp)return;
+    const noWa=(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
+    const sisa=d.tagihan-(d.dibayar||0);
+    let pesan=waTemplate
+      .replace(/{nama}/g,d.nama)
+      .replace(/{bulan}/g,bulan)
+      .replace(/{tagihan}/g,fRp(sisa>0?sisa:d.tagihan))
+      .replace(/{rekening}/g,rekStr);
+    setTimeout(()=>{window.open('https://wa.me/'+noWa+'?text='+encodeURIComponent(pesan),'_blank');},delay);
+    delay+=800;
+  });
+  clearSeleksiWA();
+}
 
 function renderStatBody(list,status){
   const body=document.getElementById('stat-detail-body');
@@ -1288,24 +1351,19 @@ function renderStatBody(list,status){
     return;
   }
   const canPay=status==='belum'||status==='hutang'||status==='semua';
+  _waSeleksi=new Set(); updateWABar();
   body.innerHTML=list.map((d,i)=>{
     const sisa=d.tagihan-(d.dibayar||0);
     const adaSisa=(d.dibayar||0)>0&&sisa>0;
     const needPay=canPay&&(d.status==='belum'||d.status==='hutang');
     const isLunas=d.status==='lunas';
     const isHutang=d.status==='hutang';
-    const showCheck=isLunas||isHutang;
-    const checked=d.dikonfirmasi||false;
     const waNum=(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
-    // Kotak hijau = sudah diterima (lunas), kotak merah = sudah diingatkan (hutang)
-    const checkStyle=isLunas
-      ?`border-color:#C0DD97${checked?';background:#0F6E56;border-color:#0F6E56':''}`
-      :`border-color:#F7C1C1${checked?';background:#A32D2D;border-color:#A32D2D':''}`;
-    const checkTitle=isLunas
-      ?(checked?'Sudah diterima ✓':'Tandai uang sudah diterima')
-      :(checked?'Sudah diingatkan ✓':'Tandai sudah diingatkan');
+    // Lunas: kotak konfirmasi diterima (hijau)
+    const konfirmasi=d.dikonfirmasi||false;
+    const checkStyle=`border-color:#C0DD97${konfirmasi?';background:#0F6E56;border-color:#0F6E56':''}`;
     return`<div class="stat-detail-item" style="align-items:flex-start;gap:10px">
-      <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua};margin-top:2px">${i+1}</div>
+      <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua};margin-top:3px">${i+1}</div>
       <div style="flex:1;min-width:0">
         <div class="stat-detail-nama">
           ${d.nama}
@@ -1314,14 +1372,15 @@ function renderStatBody(list,status){
         <div class="stat-detail-meta">
           ${d.tagihan>0?`<span>Tagihan: <b>${fRp(d.tagihan)}</b></span>`:''}
           ${(d.dibayar||0)>0?`<span>Dibayar: <b>${fRp(d.dibayar)}</b></span>`:''}
+          ${sisa>0?`<span style="color:var(--red-d);font-weight:600">Sisa: ${fRp(sisa)}</span>`:''}
           ${d.tgl?`<span>Tgl: ${fTgl(d.tgl)}</span>`:''}
           <span style="background:${_statNumBg[d.status]||'#eee'};color:${_statNumClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${_statLbl[d.status]||d.status}</span>
-          <span style="font-size:10px">${d.via==='cash'?'💵 Cash':'🏦 Transfer'}</span>
+          ${isLunas?`<span style="font-size:10px">${d.via==='cash'?'💵 Cash':'🏦 Transfer'}</span>`:''}
         </div>
-        ${adaSisa?`<div class="stat-detail-sisa"><i class="ti ti-alert-circle" style="font-size:11px"></i> Sisa: ${fRp(sisa)}</div>`:''}
         ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
       </div>
-      ${showCheck?`<button class="stat-check-btn${checked?' checked':''}" style="${checkStyle}" onclick="toggleKonfirmasi(${d.id})" title="${checkTitle}"><i class="ti ti-check" style="font-size:16px"></i></button>`:''}
+      ${isLunas?`<button class="stat-check-btn${konfirmasi?' checked':''}" style="${checkStyle}" onclick="toggleKonfirmasi(${d.id})" title="${konfirmasi?'Sudah diterima ✓':'Tandai uang sudah diterima'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
+      ${isHutang?`<button class="stat-sel-btn" id="sel-${d.id}" onclick="toggleSeleksiWA(${d.id},${!!d.hp})" title="${d.hp?'Pilih untuk kirim WA':'Tidak ada nomor WA'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
     </div>`;
   }).join('');
 }
@@ -1622,6 +1681,7 @@ function tutupPanel(id){
     document.getElementById('lk-fab').style.display='none';
     document.getElementById('lk-paket-btn').style.display='none';
   }
+  if(id==='panel-stat-detail'){_waSeleksi=new Set();updateWABar();}
 }
 
 /* ===== DATA PELANGGAN ===== */
