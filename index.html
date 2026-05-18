@@ -341,7 +341,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   <div class="sc" onclick="bukaStatDetail('lunas','Pelanggan Lunas')"><div class="lbl">Lunas</div><div class="val vg" id="jml-lunas">0</div></div>
   <div class="sc" onclick="bukaStatDetail('belum','Belum Bayar')"><div class="lbl">Belum</div><div class="val va" id="jml-belum">0</div></div>
   <div class="sc" onclick="bukaStatDetail('hutang','Pelanggan Hutang')"><div class="lbl">Hutang</div><div class="val vr" id="jml-hutang">0</div></div>
-  <div class="sc" onclick="bukaStatDetail('ropel','Bayar Ropel')"><div class="lbl">Ropel</div><div class="val vb" id="jml-ropel">0</div></div>
+  <div class="sc" onclick="bukaStatDetail('transfer','Bayar Transfer')"><div class="lbl">Transfer</div><div class="val vb" id="jml-ropel">0</div></div>
 </div>
 
 <div class="tabs">
@@ -1297,7 +1297,7 @@ function updateStats(){
   document.getElementById('jml-lunas').textContent=data.filter(d=>d.status==='lunas').length;
   document.getElementById('jml-belum').textContent=data.filter(d=>d.status==='belum').length;
   document.getElementById('jml-hutang').textContent=data.filter(d=>d.status==='hutang').length;
-  document.getElementById('jml-ropel').textContent=data.filter(d=>d.status==='ropel').length;
+  document.getElementById('jml-ropel').textContent=data.filter(d=>d.via==='transfer').length;
   const cash=data.filter(d=>d.via==='cash').reduce((s,d)=>s+d.dibayar,0);
   const transfer=data.filter(d=>d.via==='transfer').reduce((s,d)=>s+d.dibayar,0);
   const belumTerealisasi=data.filter(d=>d.status==='belum'||d.status==='hutang').reduce((s,d)=>s+(d.tagihan-d.dibayar),0);
@@ -1340,10 +1340,10 @@ function setSubMenu(menu,cls){
   document.getElementById('sm-'+menu).className='smenu-btn '+cls;
   renderData();
 }
-const _statBg={lunas:'#0F6E56',belum:'#BA7517',hutang:'#A32D2D',ropel:'#185FA5',semua:'#0F6E56'};
-const _statNumBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1FB',semua:'#EAF3DE'};
-const _statNumClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C',semua:'#085041'};
-const _statLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel'};
+const _statBg={lunas:'#0F6E56',belum:'#BA7517',hutang:'#A32D2D',ropel:'#185FA5',transfer:'#185FA5',semua:'#0F6E56'};
+const _statNumBg={lunas:'#EAF3DE',belum:'#FAEEDA',hutang:'#FCEBEB',ropel:'#E6F1FB',transfer:'#E6F1FB',semua:'#EAF3DE'};
+const _statNumClr={lunas:'#085041',belum:'#633806',hutang:'#791F1F',ropel:'#0C447C',transfer:'#0C447C',semua:'#085041'};
+const _statLbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang',ropel:'Bayar Ropel',transfer:'Transfer'};
 let _statData=[],_currentStatStatus='';
 let _waSeleksi=new Set();
 
@@ -1371,30 +1371,34 @@ function kirimWASeleksi(){
   const ids=[..._waSeleksi];
   if(!ids.length)return;
   const tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  const bulan=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-  // Kumpulkan data pelanggan terpilih
   const dipilih=ids.map(id=>data.find(x=>x.id===id)).filter(Boolean);
-  let totalSisa=0;
+  const isTransfer=_currentStatStatus==='transfer';
+  let totalNominal=0;
   const baris=dipilih.map((d,i)=>{
     const sisa=d.tagihan-(d.dibayar||0);
-    totalSisa+=sisa>0?sisa:d.tagihan;
-    const sisaStr=sisa>0?fRp(sisa):fRp(d.tagihan);
-    const tglBayar=d.jatuhTempo?fTgl(d.jatuhTempo):'—';
-    return `${i+1}. *${d.nama}* — Sisa: ${sisaStr} — Tgl Bayar: ${tglBayar}`;
+    if(isTransfer){
+      totalNominal+=d.dibayar||0;
+      const tglBayar=d.tgl?fTgl(d.tgl):'—';
+      return `${i+1}. *${d.nama}* — Rp ${fRp(d.dibayar||0)} — Tgl: ${tglBayar}`;
+    } else {
+      totalNominal+=sisa>0?sisa:d.tagihan;
+      const tglBayar=d.jatuhTempo?fTgl(d.jatuhTempo):'—';
+      return `${i+1}. *${d.nama}* — Sisa: ${fRp(sisa>0?sisa:d.tagihan)} — Tgl Bayar: ${tglBayar}`;
+    }
   }).join('\n');
-  // Buat laporan gabungan
+  const judul=isTransfer?'LAPORAN PEMBAYARAN TRANSFER':'LAPORAN HUTANG IURAN WIFI';
+  const footer=isTransfer
+    ?`💰 *Total Transfer: ${fRp(totalNominal)}*\n👥 Jumlah: ${dipilih.length} pelanggan`
+    :`💰 *Total Sisa: ${fRp(totalNominal)}*\n👥 Jumlah: ${dipilih.length} pelanggan\n\nMohon segera melakukan pembayaran. Terima kasih 🙏`;
   const laporan=
-`📋 *LAPORAN HUTANG IURAN WIFI*
+`📋 *${judul}*
 📅 Tanggal: ${tgl}
 ━━━━━━━━━━━━━━━━━━
 
 ${baris}
 
 ━━━━━━━━━━━━━━━━━━
-💰 *Total Sisa: ${fRp(totalSisa)}*
-👥 Jumlah: ${dipilih.length} pelanggan
-
-Mohon segera melakukan pembayaran. Terima kasih 🙏`;
+${footer}`;
   // Buka WA tanpa nomor tujuan — user pilih sendiri grup/kontak
   window.open('https://wa.me/?text='+encodeURIComponent(laporan),'_blank');
   clearSeleksiWA();
@@ -1408,17 +1412,18 @@ function renderStatBody(list,status){
     return;
   }
   const canPay=status==='belum'||status==='hutang'||status==='semua';
+  const isTransferPanel=status==='transfer';
   _waSeleksi=new Set(); updateWABar();
   body.innerHTML=list.map((d,i)=>{
     const sisa=d.tagihan-(d.dibayar||0);
-    const adaSisa=(d.dibayar||0)>0&&sisa>0;
     const needPay=canPay&&(d.status==='belum'||d.status==='hutang');
     const isLunas=d.status==='lunas';
     const isHutang=d.status==='hutang';
     const waNum=(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
-    // Lunas: kotak konfirmasi diterima (hijau)
     const konfirmasi=d.dikonfirmasi||false;
     const checkStyle=`border-color:#C0DD97${konfirmasi?';background:#0F6E56;border-color:#0F6E56':''}`;
+    // Selector WA: hutang panel ATAU transfer panel
+    const showSel=isHutang||(isTransferPanel);
     return`<div class="stat-detail-item" style="align-items:flex-start;gap:10px">
       <div class="stat-detail-num" style="background:${_statNumBg[status]||_statNumBg.semua};color:${_statNumClr[status]||_statNumClr.semua};margin-top:3px">${i+1}</div>
       <div style="flex:1;min-width:0">
@@ -1432,12 +1437,12 @@ function renderStatBody(list,status){
           ${sisa>0?`<span style="color:var(--red-d);font-weight:600">Sisa: ${fRp(sisa)}</span>`:''}
           ${d.tgl?`<span>Tgl: ${fTgl(d.tgl)}</span>`:''}
           <span style="background:${_statNumBg[d.status]||'#eee'};color:${_statNumClr[d.status]||'#333'};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${_statLbl[d.status]||d.status}</span>
-          ${isLunas?`<span style="font-size:10px">${d.via==='cash'?'💵 Cash':'🏦 Transfer'}</span>`:''}
+          <span style="font-size:10px">${d.via==='cash'?'💵 Cash':'🏦 Transfer'}</span>
         </div>
         ${needPay?`<button class="stat-bayar-btn" onclick="bukaQpay('${d.id}')"><i class="ti ti-cash" style="font-size:13px"></i> Bayar</button>`:''}
       </div>
-      ${isLunas?`<button class="stat-check-btn${konfirmasi?' checked':''}" style="${checkStyle}" onclick="toggleKonfirmasi(${d.id})" title="${konfirmasi?'Sudah diterima ✓':'Tandai uang sudah diterima'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
-      ${isHutang?`<button class="stat-sel-btn" id="sel-${d.id}" onclick="toggleSeleksiWA(${d.id},${!!d.hp})" title="${d.hp?'Pilih untuk kirim WA':'Tidak ada nomor WA'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
+      ${isLunas&&!isTransferPanel?`<button class="stat-check-btn${konfirmasi?' checked':''}" style="${checkStyle}" onclick="toggleKonfirmasi(${d.id})" title="${konfirmasi?'Sudah diterima ✓':'Tandai uang sudah diterima'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
+      ${showSel?`<button class="stat-sel-btn" id="sel-${d.id}" onclick="toggleSeleksiWA(${d.id},${!!d.hp})" title="${d.hp?'Pilih untuk buat laporan':'Tidak ada nomor WA'}"><i class="ti ti-check" style="font-size:15px"></i></button>`:''}
     </div>`;
   }).join('');
 }
@@ -1471,7 +1476,10 @@ function toggleKonfirmasi(id){
 }
 
 function bukaStatDetail(status,label){
-  const all=status==='semua'?[...data]:data.filter(d=>d.status===status);
+  let all;
+  if(status==='semua') all=[...data];
+  else if(status==='transfer') all=data.filter(d=>d.via==='transfer');
+  else all=data.filter(d=>d.status===status);
   all.sort((a,b)=>a.nama.localeCompare(b.nama));
   _statData=all;
   _currentStatStatus=status;
@@ -1732,7 +1740,7 @@ function konfirmasiBayar(){
   if(activeTab==='analisa')renderAnalisa();
   if(document.getElementById('panel-stat-detail').classList.contains('show')){
     const q=document.getElementById('stat-search-input').value;
-    const all=_currentStatStatus==='semua'?[...data]:data.filter(x=>x.status===_currentStatStatus);
+    const all=_currentStatStatus==='semua'?[...data]:_currentStatStatus==='transfer'?data.filter(x=>x.via==='transfer'):data.filter(x=>x.status===_currentStatStatus);
     all.sort((a,b)=>a.nama.localeCompare(b.nama));
     _statData=all;
     filterStatDetail(q);
