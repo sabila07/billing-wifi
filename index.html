@@ -1374,18 +1374,34 @@ function kirimWASeleksi(){
   const dipilih=ids.map(id=>data.find(x=>x.id===id)).filter(Boolean);
   const isTransfer=_currentStatStatus==='transfer';
   let totalNominal=0;
-  const baris=dipilih.map((d,i)=>{
-    const sisa=d.tagihan-(d.dibayar||0);
-    if(isTransfer){
-      totalNominal+=d.dibayar||0;
-      const tglBayar=d.tgl?fTgl(d.tgl):'—';
-      return `${i+1}. *${d.nama}* — Rp ${fRp(d.dibayar||0)} — Tgl: ${tglBayar}`;
-    } else {
+  let baris='';
+
+  if(isTransfer){
+    // Kelompokkan berdasarkan rekening tujuan
+    const groups={};
+    dipilih.forEach(d=>{
+      const rek=d.rekTujuan||'(tidak ada rekening)';
+      if(!groups[rek])groups[rek]=[];
+      groups[rek].push(d);
+    });
+    const bagian=Object.entries(groups).map(([rek,anggota])=>{
+      const rows=anggota.map((d,i)=>{
+        totalNominal+=d.dibayar||0;
+        const tglBayar=d.tgl?fTgl(d.tgl):'—';
+        return `${i+1}. *${d.nama}* — ${fRp(d.dibayar||0)} — Tgl: ${tglBayar}`;
+      }).join('\n');
+      return `*${rek}*\n${rows}`;
+    });
+    baris=bagian.join('\n\n');
+  } else {
+    baris=dipilih.map((d,i)=>{
+      const sisa=d.tagihan-(d.dibayar||0);
       totalNominal+=sisa>0?sisa:d.tagihan;
       const tglBayar=d.jatuhTempo?fTgl(d.jatuhTempo):'—';
       return `${i+1}. *${d.nama}* — Sisa: ${fRp(sisa>0?sisa:d.tagihan)} — Tgl Bayar: ${tglBayar}`;
-    }
-  }).join('\n');
+    }).join('\n');
+  }
+
   const judul=isTransfer?'LAPORAN PEMBAYARAN TRANSFER':'LAPORAN HUTANG IURAN WIFI';
   const footer=isTransfer
     ?`💰 *Total Transfer: ${fRp(totalNominal)}*\n👥 Jumlah: ${dipilih.length} pelanggan`
