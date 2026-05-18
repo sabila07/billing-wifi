@@ -1360,7 +1360,8 @@ function kirimWASeleksi(){
     const sisa=d.tagihan-(d.dibayar||0);
     totalSisa+=sisa>0?sisa:d.tagihan;
     const sisaStr=sisa>0?fRp(sisa):fRp(d.tagihan);
-    return `${i+1}. *${d.nama}*${d.hp?' ('+d.hp+')':''} — Sisa: ${sisaStr}`;
+    const tglBayar=d.jatuhTempo?fTgl(d.jatuhTempo):'—';
+    return `${i+1}. *${d.nama}* — Sisa: ${sisaStr} — Tgl Bayar: ${tglBayar}`;
   }).join('\n');
   // Buat laporan gabungan
   const laporan=
