@@ -677,7 +677,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <div class="wa-select-info"><i class="ti ti-checkbox" style="font-size:15px;vertical-align:middle"></i> Terpilih<span id="wa-select-count">0</span></div>
     <div class="wa-select-actions">
       <button class="wa-clear-btn" onclick="clearSeleksiWA()">Batal</button>
-      <button class="wa-send-btn" onclick="kirimWASeleksi()"><i class="ti ti-brand-whatsapp" style="font-size:15px"></i> Kirim WA</button>
+      <button class="wa-send-btn" onclick="kirimWASeleksi()"><i class="ti ti-brand-whatsapp" style="font-size:15px"></i> Buat Laporan</button>
     </div>
   </div>
 </div>
@@ -1351,23 +1351,32 @@ function clearSeleksiWA(){
 function kirimWASeleksi(){
   const ids=[..._waSeleksi];
   if(!ids.length)return;
+  const tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   const bulan=new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-  let rekStr='';
-  if(rekening&&rekening.length){rekStr=rekening.filter(r=>r.norek).map(r=>`${r.bank}: ${r.norek} (${r.nama})`).join('\n');}
-  let delay=0;
-  ids.forEach(id=>{
-    const d=data.find(x=>x.id===id);
-    if(!d||!d.hp)return;
-    const noWa=(d.hp||'').replace(/[^0-9]/g,'').replace(/^0/,'62');
+  // Kumpulkan data pelanggan terpilih
+  const dipilih=ids.map(id=>data.find(x=>x.id===id)).filter(Boolean);
+  let totalSisa=0;
+  const baris=dipilih.map((d,i)=>{
     const sisa=d.tagihan-(d.dibayar||0);
-    let pesan=waTemplate
-      .replace(/{nama}/g,d.nama)
-      .replace(/{bulan}/g,bulan)
-      .replace(/{tagihan}/g,fRp(sisa>0?sisa:d.tagihan))
-      .replace(/{rekening}/g,rekStr);
-    setTimeout(()=>{window.open('https://wa.me/'+noWa+'?text='+encodeURIComponent(pesan),'_blank');},delay);
-    delay+=800;
-  });
+    totalSisa+=sisa>0?sisa:d.tagihan;
+    const sisaStr=sisa>0?fRp(sisa):fRp(d.tagihan);
+    return `${i+1}. *${d.nama}*${d.hp?' ('+d.hp+')':''} — Sisa: ${sisaStr}`;
+  }).join('\n');
+  // Buat laporan gabungan
+  const laporan=
+`📋 *LAPORAN HUTANG IURAN WIFI*
+📅 Tanggal: ${tgl}
+━━━━━━━━━━━━━━━━━━
+
+${baris}
+
+━━━━━━━━━━━━━━━━━━
+💰 *Total Sisa: ${fRp(totalSisa)}*
+👥 Jumlah: ${dipilih.length} pelanggan
+
+Mohon segera melakukan pembayaran. Terima kasih 🙏`;
+  // Buka WA tanpa nomor tujuan — user pilih sendiri grup/kontak
+  window.open('https://wa.me/?text='+encodeURIComponent(laporan),'_blank');
   clearSeleksiWA();
 }
 
