@@ -988,25 +988,45 @@ function connectFirestore(){
     fbReady=false;scheduleRetry();
   }
 }
+let _heartbeat=null;
+function forceReconnect(){
+  const fs=firebase.firestore();
+  setSyncStatus('syncing','Menyinkronkan...');
+  fs.disableNetwork().then(()=>fs.enableNetwork()).then(()=>{
+    fbReady=false;connectFirestore();
+  }).catch(()=>{fbReady=false;connectFirestore();});
+}
+function startHeartbeat(){
+  if(_heartbeat)clearInterval(_heartbeat);
+  _heartbeat=setInterval(()=>{
+    if(document.visibilityState==='visible'&&!fbReady){
+      forceReconnect();
+    }
+  },20000);
+}
 function initFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
-    firebase.firestore().enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    firebase.firestore().enablePersistence().catch(()=>{});
     connectFirestore();
+    startHeartbeat();
     window.addEventListener('online',()=>{
-      setSyncStatus('syncing','Internet tersambung, sinkronisasi...');
-      fbReady=false;connectFirestore();
+      setSyncStatus('syncing','Internet tersambung...');
+      forceReconnect();
     });
     window.addEventListener('offline',()=>{
       setSyncStatus('err','Tidak ada internet');fbReady=false;
     });
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){
-        fbReady=false;connectFirestore();
+        forceReconnect();
+      }else{
+        fbReady=false;
       }
     });
-    window.addEventListener('focus',()=>{
-      if(!fbReady)connectFirestore();
+    window.addEventListener('focus',()=>{forceReconnect();});
+    window.addEventListener('pageshow',(e)=>{
+      if(e.persisted){forceReconnect();}
     });
   }catch(e){
     setSyncStatus('err','Gagal inisialisasi Firebase');scheduleRetry();
