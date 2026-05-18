@@ -309,6 +309,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   </div>
   <div class="topbar-btns">
     <div id="sync-dot" title="Status sync"></div>
+    <button class="topbar-btn" id="btn-refresh" onclick="manualRefresh()" aria-label="Refresh data" title="Refresh data dari server"><i class="ti ti-refresh"></i></button>
     <button class="topbar-btn" onclick="bukaExportModal()" aria-label="Export Excel"><i class="ti ti-file-spreadsheet"></i></button>
     <button class="topbar-btn" onclick="bukaModal()" aria-label="Tambah"><i class="ti ti-plus"></i></button>
   </div>
@@ -984,21 +985,10 @@ function connectFirestore(){
       if(_fbRetry){clearTimeout(_fbRetry);_fbRetry=null;}
       if(!snap.exists){
         docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList});
-        fbReady=true;setSyncStatus('ok','Terhubung ✓');return;
+        fbReady=true;_lastSyncTime=Date.now();setSyncStatus('ok','Terhubung ✓');return;
       }
-      const val=snap.data();
-      if(val.data&&val.data.length){
-        data=val.data.sort((a,b)=>a.id-b.id);
-        nextId=Math.max(...data.map(d=>d.id))+1;
-        localStorage.setItem('bwifi_data',JSON.stringify(data));
-        renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
-      }
-      if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
-      if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
-      if(val.authUser){_authUser=val.authUser;localStorage.setItem('bwifi_auth_user',val.authUser);}
-      if(val.authPass){_authPass=val.authPass;localStorage.setItem('bwifi_auth_pass',val.authPass);}
-      if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem('bwifi_paket',JSON.stringify(paketList));}
-      fbReady=true;setSyncStatus('ok','Tersinkron ✓');
+      applyFirestoreData(snap.data());
+      fbReady=true;_lastSyncTime=Date.now();setSyncStatus('ok','Tersinkron ✓');
     },err=>{
       setSyncStatus('err','Offline — mencoba ulang...');
       fbReady=false;scheduleRetry();
@@ -1008,22 +998,57 @@ function connectFirestore(){
     fbReady=false;scheduleRetry();
   }
 }
-let _heartbeat=null;
-function forceReconnect(){
-  const fs=firebase.firestore();
-  setSyncStatus('syncing','Menyinkronkan...');
-  fs.disableNetwork().then(()=>fs.enableNetwork()).then(()=>{
-    fbReady=false;connectFirestore();
-  }).catch(()=>{fbReady=false;connectFirestore();});
+let _heartbeat=null,_lastSyncTime=0,_refreshing=false;
+
+function applyFirestoreData(val){
+  if(!val)return;
+  if(val.data&&val.data.length){
+    data=val.data.sort((a,b)=>a.id-b.id);
+    nextId=Math.max(...data.map(d=>d.id))+1;
+    localStorage.setItem('bwifi_data',JSON.stringify(data));
+    renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
+  }
+  if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
+  if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
+  if(val.authUser){_authUser=val.authUser;localStorage.setItem('bwifi_auth_user',val.authUser);}
+  if(val.authPass){_authPass=val.authPass;localStorage.setItem('bwifi_auth_pass',val.authPass);}
+  if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem('bwifi_paket',JSON.stringify(paketList));}
 }
+
+function fetchFromServer(){
+  if(!window._docRef||_refreshing)return;
+  _refreshing=true;
+  setSyncStatus('syncing','Mengambil data...');
+  const btn=document.getElementById('btn-refresh');
+  if(btn)btn.style.opacity='0.5';
+  window._docRef.get({source:'server'}).then(snap=>{
+    _refreshing=false;
+    if(btn)btn.style.opacity='1';
+    if(!snap.exists)return;
+    applyFirestoreData(snap.data());
+    fbReady=true;_lastSyncTime=Date.now();
+    setSyncStatus('ok','Tersinkron ✓');
+  }).catch(()=>{
+    _refreshing=false;
+    if(btn)btn.style.opacity='1';
+    setSyncStatus('err','Gagal refresh — coba lagi');
+    scheduleRetry();
+  });
+}
+
+function manualRefresh(){
+  fetchFromServer();
+}
+
 function startHeartbeat(){
   if(_heartbeat)clearInterval(_heartbeat);
   _heartbeat=setInterval(()=>{
-    if(document.visibilityState==='visible'&&!fbReady){
-      forceReconnect();
-    }
-  },20000);
+    if(document.visibilityState!=='visible')return;
+    const stale=Date.now()-_lastSyncTime>30000;
+    if(!fbReady||stale)fetchFromServer();
+  },15000);
 }
+
 function initFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
@@ -1032,21 +1057,24 @@ function initFirebase(){
     startHeartbeat();
     window.addEventListener('online',()=>{
       setSyncStatus('syncing','Internet tersambung...');
-      forceReconnect();
+      fetchFromServer();
     });
     window.addEventListener('offline',()=>{
       setSyncStatus('err','Tidak ada internet');fbReady=false;
     });
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){
-        forceReconnect();
+        const stale=Date.now()-_lastSyncTime>10000;
+        if(stale)fetchFromServer();
       }else{
         fbReady=false;
       }
     });
-    window.addEventListener('focus',()=>{forceReconnect();});
+    window.addEventListener('focus',()=>{
+      if(Date.now()-_lastSyncTime>10000)fetchFromServer();
+    });
     window.addEventListener('pageshow',(e)=>{
-      if(e.persisted){forceReconnect();}
+      if(e.persisted)fetchFromServer();
     });
   }catch(e){
     setSyncStatus('err','Gagal inisialisasi Firebase');scheduleRetry();
