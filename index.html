@@ -1032,16 +1032,15 @@ function doAdminLogin(){
 function connectAdminDoc(){
   try{
     const fs=firebase.firestore();
-    _adminDocRef=fs.doc('bwifi/_superadmin');
-    // Pastikan dokumen ada, jika belum buat dulu
-    _adminDocRef.get().then(snap=>{
-      if(!snap.exists){
-        _adminDocRef.set({tenants:[]}).catch(()=>{});
+    const mainRef=fs.doc('bwifi/main');
+    _adminDocRef=mainRef;
+    mainRef.onSnapshot(snap=>{
+      if(snap.exists){
+        const d=snap.data();
+        _adminTenants=d._tenants||[];
+      }else{
+        _adminTenants=[];
       }
-    }).catch(()=>{});
-    _adminDocRef.onSnapshot(snap=>{
-      if(snap.exists){_adminTenants=snap.data().tenants||[];}
-      else{_adminTenants=[];}
       renderTenantList();
     },()=>{renderTenantList();});
   }catch(e){setTimeout(connectAdminDoc,1000);}
@@ -1082,24 +1081,17 @@ function simpanTenantBaru(){
     if(!nama||!id||!user||!pass){alert('Semua field wajib diisi.');return;}
     if(pass.length<6){alert('Password minimal 6 karakter.');return;}
     if(_adminTenants.find(t=>t.id===id)){alert('ID sudah digunakan. Pilih ID lain.');return;}
-    // Pastikan firebase sudah siap
-    if(!firebase||!firebase.apps||!firebase.apps.length){
-      alert('Firebase belum siap. Tunggu sebentar lalu coba lagi.');return;
-    }
-    const fs=firebase.firestore();
-    if(!fs){alert('Firestore tidak tersedia.');return;}
-    const newTenant={id,nama,authUser:user,aktif:true,createdAt:new Date().toISOString()};
+    if(!firebase||!firebase.apps||!firebase.apps.length){alert('Firebase belum siap. Coba lagi.');return;}
+    const newTenant={id,nama,authUser:user,authPass:pass,aktif:true,createdAt:new Date().toISOString()};
     const updatedTenants=[..._adminTenants,newTenant];
-    const adminRef=fs.doc('bwifi/_superadmin');
-    const tenantRef=fs.doc('bwifi/'+id);
-    // Step 1: simpan ke _superadmin
-    adminRef.set({tenants:updatedTenants},{merge:true})
+    const fs=firebase.firestore();
+    const mainRef=fs.doc('bwifi/main');
+    // Buat data awal tenant
+    const tenantInit={data:[],rekening:[],waTemplate:'',paketList:[],authUser:user,authPass:pass};
+    const saveObj={_tenants:updatedTenants};
+    saveObj['_tenant_'+id]=tenantInit;
+    mainRef.set(saveObj,{merge:true})
       .then(()=>{
-        // Step 2: buat dokumen tenant baru
-        return tenantRef.set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]});
-      })
-      .then(()=>{
-        _adminDocRef=adminRef;
         _adminTenants=updatedTenants;
         renderTenantList();
         const url=`${location.origin}${location.pathname}?t=${id}`;
@@ -1109,29 +1101,36 @@ function simpanTenantBaru(){
       })
       .catch(e=>{
         if(e.code==='permission-denied'){
-          alert('❌ Akses ditolak Firestore!\n\nBuka Firebase Console dan update Rules:\nhttps://console.firebase.google.com/project/billing-wifi-1ef52/firestore/rules\n\nGanti dengan:\nmatch /bwifi/{docId} {\n  allow read, write: if true;\n}');
+          alert('❌ Akses ditolak!\n\nBuka Firebase Console → Firestore → Rules\nhttps://console.firebase.google.com/project/billing-wifi-1ef52/firestore/rules\n\nGanti dengan:\nmatch /bwifi/{docId}{\n  allow read,write: if true;\n}');
         }else{
-          alert('❌ Error: '+e.code+'\n'+e.message);
+          alert('❌ Error: '+(e.code||'')+'\n'+(e.message||''));
         }
       });
   }catch(err){
-    alert('❌ Error tidak terduga: '+err.message);
+    alert('❌ Error: '+err.message);
   }
 }
 function masukKeTenant(id,nama){
   _tenantId=id;_adminViewingTenant=true;
-  _authUser='';_authPass='';
+  // Load tenant's cached auth
+  _authUser=localStorage.getItem(lsk('auth_user'))||'admin';
+  _authPass=localStorage.getItem(lsk('auth_pass'))||'wifi1234';
+  // Load tenant data from already-loaded Firestore snapshot
+  const fs=firebase.firestore();
+  fs.doc('bwifi/main').get().then(snap=>{
+    if(snap.exists)applyFirestoreData(snap.data());
+  }).catch(()=>{});
   document.getElementById('admin-screen').classList.remove('show');
   document.getElementById('tenant-banner').classList.add('show');
   document.getElementById('tenant-banner-nama').textContent=nama;
-  if(window._fbUnsub){window._fbUnsub();window._fbUnsub=null;}
-  connectFirestore();
+  // No need to reconnect — _docRef already points to bwifi/main
+  if(!window._docRef){connectFirestore();}
 }
 function kembaliKeAdmin(){
-  if(window._fbUnsub){window._fbUnsub();window._fbUnsub=null;}
   _tenantId='main';_adminViewingTenant=false;
   document.getElementById('tenant-banner').classList.remove('show');
   document.getElementById('admin-screen').classList.add('show');
+  renderTenantList();
 }
 function adminLogout(){
   sessionStorage.removeItem('bwifi_admin_session');
@@ -1161,7 +1160,18 @@ function simpanPassword(){
   _authUser=user;_authPass=newP;
   localStorage.setItem(lsk('auth_user'),user);
   localStorage.setItem(lsk('auth_pass'),newP);
-  if(window._docRef)window._docRef.set({authUser:user,authPass:newP},{merge:true});
+  if(window._docRef){
+    if(_tenantId==='main'){
+      window._docRef.set({authUser:user,authPass:newP},{merge:true});
+    }else{
+      const upd={};
+      upd['_tenant_'+_tenantId]={authUser:user,authPass:newP};
+      // Also update in _tenants array
+      const newTenants=_adminTenants.map(t=>t.id===_tenantId?{...t,authUser:user,authPass:newP}:t);
+      upd._tenants=newTenants;
+      window._docRef.set(upd,{merge:true});
+    }
+  }
   tutupPanel('panel-ganti-password');
   alert('Password berhasil diubah!');
 }
@@ -1213,7 +1223,7 @@ function connectFirestore(){
   try{
     const fs=firebase.firestore();
     if(_fbUnsub){_fbUnsub();_fbUnsub=null;}
-    const docRef=fs.doc('bwifi/'+_tenantId);
+    const docRef=fs.doc('bwifi/main');
     window._docRef=docRef;
     setSyncStatus('syncing','Menyambung ke cloud...');
     _fbUnsub=docRef.onSnapshot(snap=>{
@@ -1237,17 +1247,29 @@ let _heartbeat=null,_refreshing=false;
 
 function applyFirestoreData(val){
   if(!val)return;
-  if(val.data&&val.data.length){
-    data=val.data.sort((a,b)=>a.id-b.id);
+  // Update tenant list for admin panel
+  if(val._tenants){_adminTenants=val._tenants;}
+  // Pick the right data source based on tenant
+  let src=val;
+  if(_tenantId!=='main'){
+    src=val['_tenant_'+_tenantId]||{};
+    // Get auth from _tenants array
+    const meta=(val._tenants||[]).find(t=>t.id===_tenantId);
+    if(meta){
+      if(!src.authUser)src={...src,authUser:meta.authUser,authPass:meta.authPass};
+    }
+  }
+  if(src.data&&src.data.length){
+    data=src.data.sort((a,b)=>a.id-b.id);
     nextId=Math.max(...data.map(d=>d.id))+1;
     localStorage.setItem(lsk('data'),JSON.stringify(data));
     renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
   }
-  if(val.rekening){rekening=val.rekening;localStorage.setItem(lsk('rek'),JSON.stringify(rekening));renderRekening();}
-  if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem(lsk('watemplate'),waTemplate);}
-  if(val.authUser){_authUser=val.authUser;localStorage.setItem(lsk('auth_user'),val.authUser);}
-  if(val.authPass){_authPass=val.authPass;localStorage.setItem(lsk('auth_pass'),val.authPass);}
-  if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem(lsk('paket'),JSON.stringify(paketList));}
+  if(src.rekening){rekening=src.rekening;localStorage.setItem(lsk('rek'),JSON.stringify(rekening));renderRekening();}
+  if(src.waTemplate){waTemplate=src.waTemplate;localStorage.setItem(lsk('watemplate'),waTemplate);}
+  if(src.authUser){_authUser=src.authUser;localStorage.setItem(lsk('auth_user'),src.authUser);}
+  if(src.authPass){_authPass=src.authPass;localStorage.setItem(lsk('auth_pass'),src.authPass);}
+  if(src.paketList){paketList=src.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem(lsk('paket'),JSON.stringify(paketList));}
 }
 
 function fetchFromServer(){
@@ -1333,7 +1355,14 @@ function save(){
   localStorage.setItem(lsk('data'),JSON.stringify(data));
   if(window._docRef){
     setSyncStatus('syncing','Menyimpan...');
-    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList})
+    let obj;
+    if(_tenantId==='main'){
+      obj={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList};
+    }else{
+      obj={};
+      obj['_tenant_'+_tenantId]={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList};
+    }
+    window._docRef.set(obj,{merge:true})
       .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
       .catch(()=>{setSyncStatus('err','Gagal simpan — coba lagi');if(!fbReady)scheduleRetry();});
   }
