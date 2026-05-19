@@ -295,6 +295,39 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 /* GANTI PASSWORD */
 .hmenu-auth{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;gap:8px}
 .hmenu-auth-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font)}
+/* SUPERADMIN PANEL */
+#admin-screen{display:none;position:fixed;inset:0;z-index:9997;background:linear-gradient(160deg,#0d1117 0%,#161b22 100%);overflow-y:auto;padding:20px 16px}
+#admin-screen.show{display:block}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.admin-logo{font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.admin-logo i{color:#4ade80;font-size:20px}
+.admin-logout{background:rgba(255,255,255,.1);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
+.admin-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px}
+.admin-section-title{color:rgba(255,255,255,.45);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.tenant-item{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.tenant-item-info{flex:1;min-width:0}
+.tenant-item-nama{color:#fff;font-weight:600;font-size:14px}
+.tenant-item-id{color:rgba(255,255,255,.35);font-size:11px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tenant-badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.tenant-badge.aktif{background:#052e16;color:#4ade80;border:1px solid #166534}
+.tenant-badge.nonaktif{background:#2d1515;color:#f87171;border:1px solid #7f1d1d}
+.tenant-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-masuk{background:#0F6E56;color:#fff;border:none;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.btn-copy-link{background:rgba(255,255,255,.08);color:#fff;border:none;padding:7px 10px;border-radius:8px;font-size:13px;cursor:pointer}
+.btn-tambah-tenant{width:100%;margin-top:10px;padding:12px;background:linear-gradient(135deg,#0F6E56,#1D9E75);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:7px}
+.admin-form{display:none}
+.admin-form.show{display:block}
+.admin-field{margin-bottom:10px}
+.admin-field label{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:5px;font-weight:600}
+.admin-field input{width:100%;padding:10px 12px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:13px;font-family:var(--font);outline:none}
+.admin-field input:focus{border-color:#4ade80}
+.admin-field input::placeholder{color:rgba(255,255,255,.25)}
+.admin-save-btn{width:100%;padding:12px;background:#4ade80;color:#052e16;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:4px}
+/* TENANT BANNER */
+#tenant-banner{display:none;background:#7c3aed;color:#fff;padding:8px 14px;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;font-size:12px}
+#tenant-banner.show{display:flex}
+.tenant-banner-info{display:flex;align-items:center;gap:6px;font-weight:500}
+.tenant-banner-back{background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -303,13 +336,41 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo"><i class="ti ti-wifi"></i><span>IURAN WIFI</span></div>
-    <div class="login-title">Selamat Datang</div>
-    <div class="login-sub">Masukkan username dan password untuk melanjutkan</div>
+    <div class="login-title" id="login-title">Selamat Datang</div>
+    <div class="login-sub" id="login-sub">Masukkan username dan password untuk melanjutkan</div>
     <div class="login-field"><label>Username</label><input id="login-user" type="text" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"/></div>
     <div class="login-field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')cekLogin()"/></div>
     <div class="login-err" id="login-err"></div>
     <button class="login-btn" onclick="cekLogin()">Masuk</button>
   </div>
+</div>
+
+<!-- SUPERADMIN SCREEN -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <div class="admin-logo"><i class="ti ti-shield-check"></i>Super Admin</div>
+    <button class="admin-logout" onclick="adminLogout()"><i class="ti ti-logout"></i> Logout</button>
+  </div>
+  <div class="admin-card">
+    <div class="admin-section-title">Daftar User</div>
+    <div id="tenant-list"><div style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;padding:20px">Memuat data...</div></div>
+    <button class="btn-tambah-tenant" onclick="toggleFormTambahTenant()"><i class="ti ti-plus"></i> Tambah User Baru</button>
+    <div class="admin-form" id="form-tambah-tenant" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)">
+      <div class="admin-section-title">User Baru</div>
+      <div class="admin-field"><label>Nama RT / Kampung</label><input id="nt-nama" placeholder="contoh: RT 01 Desa Makmur" type="text"/></div>
+      <div class="admin-field"><label>ID Unik (untuk link URL, huruf kecil/angka)</label><input id="nt-id" placeholder="contoh: rt01makmur" type="text" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')"/></div>
+      <div class="admin-field"><label>Username Login</label><input id="nt-user" placeholder="username pelanggan" type="text"/></div>
+      <div class="admin-field"><label>Password</label><input id="nt-pass" placeholder="password (min 6 karakter)" type="password"/></div>
+      <button class="admin-save-btn" onclick="simpanTenantBaru()"><i class="ti ti-check"></i> Simpan User Baru</button>
+    </div>
+  </div>
+  <div style="text-align:center;color:rgba(255,255,255,.25);font-size:11px;margin-top:20px;padding-bottom:40px">IURAN WIFI — Multi-User System</div>
+</div>
+
+<!-- ADMIN VIEWING TENANT BANNER -->
+<div id="tenant-banner">
+  <div class="tenant-banner-info"><i class="ti ti-eye" style="font-size:14px"></i><span id="tenant-banner-nama">-</span></div>
+  <button class="tenant-banner-back" onclick="kembaliKeAdmin()"><i class="ti ti-arrow-left"></i> Kembali ke Admin</button>
 </div>
 
 <div class="topbar">
@@ -770,19 +831,31 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
+/* ===== MULTI-TENANT ===== */
+const _urlParams=new URLSearchParams(location.search);
+const _tenantParam=_urlParams.get('t')||'';
+const _isAdminPanel=_tenantParam==='_admin';
+let _tenantId=_isAdminPanel?'main':(_tenantParam||'main');
+let _adminViewingTenant=false;
+let _adminDocRef=null;
+let _adminTenants=[];
+let _adminCredUser='',_adminCredPass='';
+// localStorage key helper — prefix per tenant for isolation
+function lsk(k){return _tenantId==='main'?`bwifi_${k}`:`bwifi_${_tenantId}_${k}`;}
+
 const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
 
-let rekening=JSON.parse(localStorage.getItem('bwifi_rek')||'null')||[
+let rekening=JSON.parse(localStorage.getItem(lsk('rek'))||'null')||[
   {nama:'Miun',bank:'BRI',norek:'Isi nomor rekening Miun'},
   {nama:'Muhlidin',bank:'BNI',norek:'Isi nomor rekening Muhlidin'},
   {nama:'Tripay',bank:'E-Wallet',norek:'Isi akun Tripay'},
 ];
-let waTemplate=localStorage.getItem('bwifi_watemplate')||'Halo *{nama}*, tagihan WiFi bulan *{bulan}* sebesar *{tagihan}* belum kami terima.\n\nMohon segera lakukan pembayaran. Bisa transfer ke:\n{rekening}\n\nTerima kasih 🙏';
-let paketList=JSON.parse(localStorage.getItem('bwifi_paket')||'[]');
+let waTemplate=localStorage.getItem(lsk('watemplate'))||'Halo *{nama}*, tagihan WiFi bulan *{bulan}* sebesar *{tagihan}* belum kami terima.\n\nMohon segera lakukan pembayaran. Bisa transfer ke:\n{rekening}\n\nTerima kasih 🙏';
+let paketList=JSON.parse(localStorage.getItem(lsk('paket'))||'[]');
 let nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;
 
-let data=JSON.parse(localStorage.getItem('bwifi_data')||'null')||[
+let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
   {id:101,nama:'Nazila',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:102,nama:'Toipah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:103,nama:'Ismail',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
@@ -915,24 +988,123 @@ let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
 /* ===== AUTH ===== */
-let _authUser=localStorage.getItem('bwifi_auth_user')||'admin';
-let _authPass=localStorage.getItem('bwifi_auth_pass')||'wifi1234';
+let _authUser=localStorage.getItem(lsk('auth_user'))||'admin';
+let _authPass=localStorage.getItem(lsk('auth_pass'))||'wifi1234';
 function cekLogin(){
   const u=document.getElementById('login-user').value.trim();
   const p=document.getElementById('login-pass').value;
   const err=document.getElementById('login-err');
   if(!u||!p){err.textContent='Username dan password wajib diisi.';return;}
-  if(u===_authUser&&p===_authPass){
-    sessionStorage.setItem('bwifi_session','1');
-    document.getElementById('login-screen').classList.remove('show');
-  } else {
-    err.textContent='Username atau password salah.';
-    document.getElementById('login-pass').value='';
-    document.getElementById('login-pass').focus();
+  if(_isAdminPanel){
+    err.textContent='Memeriksa...';
+    const fs=firebase.firestore();
+    fs.doc('bwifi/_superadmin').get().then(snap=>{
+      if(!snap.exists){
+        if(u==='superadmin'&&p==='admin123'){
+          fs.doc('bwifi/_superadmin').set({user:'superadmin',pass:'admin123',tenants:[]});
+          _adminCredUser='superadmin';_adminCredPass='admin123';_adminTenants=[];
+          doAdminLogin();
+        }else{err.textContent='Username atau password salah.';}
+      }else{
+        const d=snap.data();
+        if(u===d.user&&p===d.pass){
+          _adminCredUser=d.user;_adminCredPass=d.pass;_adminTenants=d.tenants||[];
+          doAdminLogin();
+        }else{err.textContent='Username atau password salah.';document.getElementById('login-pass').value='';}
+      }
+    }).catch(()=>err.textContent='Gagal terhubung. Coba lagi.');
+  }else{
+    if(u===_authUser&&p===_authPass){
+      sessionStorage.setItem('bwifi_session_'+_tenantId,'1');
+      document.getElementById('login-screen').classList.remove('show');
+    }else{
+      err.textContent='Username atau password salah.';
+      document.getElementById('login-pass').value='';
+      document.getElementById('login-pass').focus();
+    }
   }
 }
+function doAdminLogin(){
+  sessionStorage.setItem('bwifi_admin_session','1');
+  document.getElementById('login-screen').classList.remove('show');
+  document.getElementById('admin-screen').classList.add('show');
+  connectAdminDoc();
+}
+function connectAdminDoc(){
+  const fs=firebase.firestore();
+  _adminDocRef=fs.doc('bwifi/_superadmin');
+  _adminDocRef.onSnapshot(snap=>{
+    if(snap.exists){const d=snap.data();_adminTenants=d.tenants||[];renderTenantList();}
+  });
+}
+function renderTenantList(){
+  const el=document.getElementById('tenant-list');
+  if(!_adminTenants.length){
+    el.innerHTML='<div style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;padding:20px 0">Belum ada user. Tambah user baru di bawah.</div>';
+    return;
+  }
+  el.innerHTML=_adminTenants.map((t,i)=>`
+    <div class="tenant-item">
+      <div class="tenant-item-info">
+        <div class="tenant-item-nama">${t.nama}</div>
+        <div class="tenant-item-id">Link: ?t=${t.id} &nbsp;·&nbsp; User: ${t.authUser||t.id}</div>
+      </div>
+      <span class="tenant-badge ${t.aktif!==false?'aktif':'nonaktif'}">${t.aktif!==false?'Aktif':'Nonaktif'}</span>
+      <div class="tenant-actions">
+        <button class="btn-copy-link" onclick="salinLinkTenant('${t.id}')" title="Salin link"><i class="ti ti-copy"></i></button>
+        <button class="btn-masuk" onclick="masukKeTenant('${t.id}','${t.nama}')">Masuk</button>
+      </div>
+    </div>
+  `).join('');
+}
+function salinLinkTenant(id){
+  const url=`${location.origin}${location.pathname}?t=${id}`;
+  navigator.clipboard.writeText(url).then(()=>alert('Link disalin:\n'+url)).catch(()=>alert('Link:\n'+url));
+}
+function toggleFormTambahTenant(){
+  document.getElementById('form-tambah-tenant').classList.toggle('show');
+}
+function simpanTenantBaru(){
+  const nama=document.getElementById('nt-nama').value.trim();
+  const id=document.getElementById('nt-id').value.trim();
+  const user=document.getElementById('nt-user').value.trim();
+  const pass=document.getElementById('nt-pass').value;
+  if(!nama||!id||!user||!pass){alert('Semua field wajib diisi.');return;}
+  if(pass.length<6){alert('Password minimal 6 karakter.');return;}
+  if(_adminTenants.find(t=>t.id===id)){alert('ID sudah digunakan. Pilih ID lain.');return;}
+  const newTenant={id,nama,authUser:user,aktif:true,createdAt:new Date().toISOString()};
+  const updatedTenants=[..._adminTenants,newTenant];
+  _adminDocRef.set({tenants:updatedTenants},{merge:true}).then(()=>{
+    const fs=firebase.firestore();
+    return fs.doc(`bwifi/${id}`).set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]});
+  }).then(()=>{
+    const url=`${location.origin}${location.pathname}?t=${id}`;
+    alert(`User "${nama}" berhasil dibuat!\n\nLink: ${url}\nUsername: ${user}\nPassword: ${pass}`);
+    ['nt-nama','nt-id','nt-user','nt-pass'].forEach(k=>document.getElementById(k).value='');
+    document.getElementById('form-tambah-tenant').classList.remove('show');
+  }).catch(e=>alert('Gagal menyimpan: '+e.message));
+}
+function masukKeTenant(id,nama){
+  _tenantId=id;_adminViewingTenant=true;
+  _authUser='';_authPass='';
+  document.getElementById('admin-screen').classList.remove('show');
+  document.getElementById('tenant-banner').classList.add('show');
+  document.getElementById('tenant-banner-nama').textContent=nama;
+  if(window._fbUnsub){window._fbUnsub();window._fbUnsub=null;}
+  connectFirestore();
+}
+function kembaliKeAdmin(){
+  if(window._fbUnsub){window._fbUnsub();window._fbUnsub=null;}
+  _tenantId='main';_adminViewingTenant=false;
+  document.getElementById('tenant-banner').classList.remove('show');
+  document.getElementById('admin-screen').classList.add('show');
+}
+function adminLogout(){
+  sessionStorage.removeItem('bwifi_admin_session');
+  location.reload();
+}
 function logout(){
-  sessionStorage.removeItem('bwifi_session');
+  sessionStorage.removeItem('bwifi_session_'+_tenantId);
   location.reload();
 }
 function bukaGantiPassword(){
@@ -953,16 +1125,31 @@ function simpanPassword(){
   if(newP!==newP2){alert('Ulangi password tidak cocok.');return;}
   if(newP.length<6){alert('Password minimal 6 karakter.');return;}
   _authUser=user;_authPass=newP;
-  localStorage.setItem('bwifi_auth_user',user);
-  localStorage.setItem('bwifi_auth_pass',newP);
+  localStorage.setItem(lsk('auth_user'),user);
+  localStorage.setItem(lsk('auth_pass'),newP);
   if(window._docRef)window._docRef.set({authUser:user,authPass:newP},{merge:true});
   tutupPanel('panel-ganti-password');
   alert('Password berhasil diubah!');
 }
 (function initAuth(){
-  if(!sessionStorage.getItem('bwifi_session')){
-    document.getElementById('login-screen').classList.add('show');
-    setTimeout(()=>document.getElementById('login-user').focus(),100);
+  if(_isAdminPanel){
+    if(sessionStorage.getItem('bwifi_admin_session')){
+      document.getElementById('admin-screen').classList.add('show');
+      // Firebase must be init first — connectAdminDoc called in initFirebase
+    }else{
+      const ls=document.getElementById('login-screen');
+      ls.classList.add('show');
+      document.getElementById('login-title').textContent='Super Admin';
+      document.getElementById('login-sub').textContent='Login sebagai pemilik sistem';
+      setTimeout(()=>document.getElementById('login-user').focus(),100);
+      // Init firebase early for admin login check
+      if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
+    }
+  }else{
+    if(!sessionStorage.getItem('bwifi_session_'+_tenantId)){
+      document.getElementById('login-screen').classList.add('show');
+      setTimeout(()=>document.getElementById('login-user').focus(),100);
+    }
   }
 })();
 
@@ -992,7 +1179,7 @@ function connectFirestore(){
   try{
     const fs=firebase.firestore();
     if(_fbUnsub){_fbUnsub();_fbUnsub=null;}
-    const docRef=fs.doc('bwifi/main');
+    const docRef=fs.doc('bwifi/'+_tenantId);
     window._docRef=docRef;
     setSyncStatus('syncing','Menyambung ke cloud...');
     _fbUnsub=docRef.onSnapshot(snap=>{
@@ -1019,14 +1206,14 @@ function applyFirestoreData(val){
   if(val.data&&val.data.length){
     data=val.data.sort((a,b)=>a.id-b.id);
     nextId=Math.max(...data.map(d=>d.id))+1;
-    localStorage.setItem('bwifi_data',JSON.stringify(data));
+    localStorage.setItem(lsk('data'),JSON.stringify(data));
     renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
   }
-  if(val.rekening){rekening=val.rekening;localStorage.setItem('bwifi_rek',JSON.stringify(rekening));renderRekening();}
-  if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem('bwifi_watemplate',waTemplate);}
-  if(val.authUser){_authUser=val.authUser;localStorage.setItem('bwifi_auth_user',val.authUser);}
-  if(val.authPass){_authPass=val.authPass;localStorage.setItem('bwifi_auth_pass',val.authPass);}
-  if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem('bwifi_paket',JSON.stringify(paketList));}
+  if(val.rekening){rekening=val.rekening;localStorage.setItem(lsk('rek'),JSON.stringify(rekening));renderRekening();}
+  if(val.waTemplate){waTemplate=val.waTemplate;localStorage.setItem(lsk('watemplate'),waTemplate);}
+  if(val.authUser){_authUser=val.authUser;localStorage.setItem(lsk('auth_user'),val.authUser);}
+  if(val.authPass){_authPass=val.authPass;localStorage.setItem(lsk('auth_pass'),val.authPass);}
+  if(val.paketList){paketList=val.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem(lsk('paket'),JSON.stringify(paketList));}
 }
 
 function fetchFromServer(){
@@ -1070,8 +1257,13 @@ function initFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
     firebase.firestore().enablePersistence().catch(()=>{});
-    connectFirestore();
     startHeartbeat();
+    // If admin panel with existing session, reconnect admin doc
+    if(_isAdminPanel&&sessionStorage.getItem('bwifi_admin_session')){
+      connectAdminDoc();
+      return; // don't connect firestore for admin panel itself
+    }
+    connectFirestore();
     window.addEventListener('online',()=>{
       fbReady=false;_refreshing=false;
       setSyncStatus('syncing','Internet tersambung...');
@@ -1102,7 +1294,7 @@ function initFirebase(){
 
 /* ===== HELPERS ===== */
 function save(){
-  localStorage.setItem('bwifi_data',JSON.stringify(data));
+  localStorage.setItem(lsk('data'),JSON.stringify(data));
   if(window._docRef){
     setSyncStatus('syncing','Menyimpan...');
     window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList})
@@ -1592,8 +1784,8 @@ function simpanRekening(){
   })).filter(r=>r.nama&&r.norek);
   const tmpl=document.getElementById('wa-template').value.trim();
   if(tmpl)waTemplate=tmpl;
-  localStorage.setItem('bwifi_rek',JSON.stringify(rekening));
-  localStorage.setItem('bwifi_watemplate',waTemplate);
+  localStorage.setItem(lsk('rek'),JSON.stringify(rekening));
+  localStorage.setItem(lsk('watemplate'),waTemplate);
   renderRekening();
   tutup('overlay-rek');
   if(fbReady&&window._docRef){
@@ -1771,9 +1963,9 @@ function konfirmasiBayar(){
 
 // Auto-reset localStorage jika versi data berubah (pindah bulan)
 const DATA_VERSION='mei-2026-v1';
-if(localStorage.getItem('bwifi_version')!==DATA_VERSION){
-  localStorage.removeItem('bwifi_data');
-  localStorage.setItem('bwifi_version',DATA_VERSION);
+if(localStorage.getItem(lsk('version'))!==DATA_VERSION){
+  localStorage.removeItem(lsk('data'));
+  localStorage.setItem(lsk('version'),DATA_VERSION);
 }
 
 /* ===== HOME MENU ===== */
@@ -1957,7 +2149,7 @@ function tambahPaket(){
   if(!nama){alert('Nama paket wajib diisi.');return;}
   if(!harga){alert('Harga paket wajib diisi.');return;}
   paketList.push({id:nextPaketId++,nama,harga});
-  localStorage.setItem('bwifi_paket',JSON.stringify(paketList));
+  localStorage.setItem(lsk('paket'),JSON.stringify(paketList));
   if(window._docRef)window._docRef.set({paketList:paketList},{merge:true});
   document.getElementById('np-nama').value='';
   document.getElementById('np-harga').value='';
@@ -1967,7 +2159,7 @@ function tambahPaket(){
 function hapusPaket(id){
   if(!confirm('Hapus paket ini?'))return;
   paketList=paketList.filter(p=>p.id!==id);
-  localStorage.setItem('bwifi_paket',JSON.stringify(paketList));
+  localStorage.setItem(lsk('paket'),JSON.stringify(paketList));
   if(window._docRef)window._docRef.set({paketList:paketList},{merge:true});
   renderPaketList();
   renderPaketDropdown();
