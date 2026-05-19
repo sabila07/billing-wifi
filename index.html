@@ -839,7 +839,9 @@ let _tenantId=_isAdminPanel?'main':(_tenantParam||'main');
 let _adminViewingTenant=false;
 let _adminDocRef=null;
 let _adminTenants=[];
-let _adminCredUser='',_adminCredPass='';
+// Ganti username & password superadmin di sini:
+const _SADMIN_USER='superadmin';
+const _SADMIN_PASS='admin123';
 // localStorage key helper — prefix per tenant for isolation
 function lsk(k){return _tenantId==='main'?`bwifi_${k}`:`bwifi_${_tenantId}_${k}`;}
 
@@ -996,23 +998,13 @@ function cekLogin(){
   const err=document.getElementById('login-err');
   if(!u||!p){err.textContent='Username dan password wajib diisi.';return;}
   if(_isAdminPanel){
-    err.textContent='Memeriksa...';
-    const fs=firebase.firestore();
-    fs.doc('bwifi/_superadmin').get().then(snap=>{
-      if(!snap.exists){
-        if(u==='superadmin'&&p==='admin123'){
-          fs.doc('bwifi/_superadmin').set({user:'superadmin',pass:'admin123',tenants:[]});
-          _adminCredUser='superadmin';_adminCredPass='admin123';_adminTenants=[];
-          doAdminLogin();
-        }else{err.textContent='Username atau password salah.';}
-      }else{
-        const d=snap.data();
-        if(u===d.user&&p===d.pass){
-          _adminCredUser=d.user;_adminCredPass=d.pass;_adminTenants=d.tenants||[];
-          doAdminLogin();
-        }else{err.textContent='Username atau password salah.';document.getElementById('login-pass').value='';}
-      }
-    }).catch(()=>err.textContent='Gagal terhubung. Coba lagi.');
+    if(u===_SADMIN_USER&&p===_SADMIN_PASS){
+      doAdminLogin();
+    }else{
+      err.textContent='Username atau password salah.';
+      document.getElementById('login-pass').value='';
+      document.getElementById('login-pass').focus();
+    }
   }else{
     if(u===_authUser&&p===_authPass){
       sessionStorage.setItem('bwifi_session_'+_tenantId,'1');
@@ -1028,14 +1020,31 @@ function doAdminLogin(){
   sessionStorage.setItem('bwifi_admin_session','1');
   document.getElementById('login-screen').classList.remove('show');
   document.getElementById('admin-screen').classList.add('show');
-  connectAdminDoc();
+  // Pastikan Firebase sudah init sebelum connectAdminDoc
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
+    connectAdminDoc();
+  }catch(e){
+    // Firebase belum siap, tunggu sebentar
+    setTimeout(connectAdminDoc,800);
+  }
 }
 function connectAdminDoc(){
-  const fs=firebase.firestore();
-  _adminDocRef=fs.doc('bwifi/_superadmin');
-  _adminDocRef.onSnapshot(snap=>{
-    if(snap.exists){const d=snap.data();_adminTenants=d.tenants||[];renderTenantList();}
-  });
+  try{
+    const fs=firebase.firestore();
+    _adminDocRef=fs.doc('bwifi/_superadmin');
+    // Pastikan dokumen ada, jika belum buat dulu
+    _adminDocRef.get().then(snap=>{
+      if(!snap.exists){
+        _adminDocRef.set({tenants:[]}).catch(()=>{});
+      }
+    }).catch(()=>{});
+    _adminDocRef.onSnapshot(snap=>{
+      if(snap.exists){_adminTenants=snap.data().tenants||[];}
+      else{_adminTenants=[];}
+      renderTenantList();
+    },()=>{renderTenantList();});
+  }catch(e){setTimeout(connectAdminDoc,1000);}
 }
 function renderTenantList(){
   const el=document.getElementById('tenant-list');
@@ -1257,12 +1266,14 @@ function initFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
     firebase.firestore().enablePersistence().catch(()=>{});
-    startHeartbeat();
-    // If admin panel with existing session, reconnect admin doc
-    if(_isAdminPanel&&sessionStorage.getItem('bwifi_admin_session')){
-      connectAdminDoc();
-      return; // don't connect firestore for admin panel itself
+    // Admin panel: hanya init Firebase, tidak connect ke tenant
+    if(_isAdminPanel){
+      if(sessionStorage.getItem('bwifi_admin_session')){
+        connectAdminDoc();
+      }
+      return;
     }
+    startHeartbeat();
     connectFirestore();
     window.addEventListener('online',()=>{
       fbReady=false;_refreshing=false;
