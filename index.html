@@ -1083,15 +1083,23 @@ function simpanTenantBaru(){
   if(_adminTenants.find(t=>t.id===id)){alert('ID sudah digunakan. Pilih ID lain.');return;}
   const newTenant={id,nama,authUser:user,aktif:true,createdAt:new Date().toISOString()};
   const updatedTenants=[..._adminTenants,newTenant];
-  _adminDocRef.set({tenants:updatedTenants},{merge:true}).then(()=>{
-    const fs=firebase.firestore();
-    return fs.doc(`bwifi/${id}`).set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]});
-  }).then(()=>{
-    const url=`${location.origin}${location.pathname}?t=${id}`;
-    alert(`User "${nama}" berhasil dibuat!\n\nLink: ${url}\nUsername: ${user}\nPassword: ${pass}`);
-    ['nt-nama','nt-id','nt-user','nt-pass'].forEach(k=>document.getElementById(k).value='');
-    document.getElementById('form-tambah-tenant').classList.remove('show');
-  }).catch(e=>alert('Gagal menyimpan: '+e.message));
+  const fs=firebase.firestore();
+  const adminRef=fs.doc('bwifi/_superadmin');
+  const tenantRef=fs.doc('bwifi/'+id);
+  // Simpan daftar tenant ke _superadmin
+  adminRef.set({tenants:updatedTenants},{merge:true})
+    .then(()=>tenantRef.set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]}))
+    .then(()=>{
+      _adminDocRef=adminRef;
+      const url=`${location.origin}${location.pathname}?t=${id}`;
+      alert(`✅ User "${nama}" berhasil dibuat!\n\nLink: ${url}\nUsername: ${user}\nPassword: ${pass}`);
+      ['nt-nama','nt-id','nt-user','nt-pass'].forEach(k=>document.getElementById(k).value='');
+      document.getElementById('form-tambah-tenant').classList.remove('show');
+    })
+    .catch(e=>{
+      console.error(e);
+      alert('Gagal menyimpan: '+e.message+'\n\nPastikan Firestore Rules sudah diupdate di Firebase Console.');
+    });
 }
 function masukKeTenant(id,nama){
   _tenantId=id;_adminViewingTenant=true;
