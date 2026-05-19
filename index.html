@@ -1074,32 +1074,49 @@ function toggleFormTambahTenant(){
   document.getElementById('form-tambah-tenant').classList.toggle('show');
 }
 function simpanTenantBaru(){
-  const nama=document.getElementById('nt-nama').value.trim();
-  const id=document.getElementById('nt-id').value.trim();
-  const user=document.getElementById('nt-user').value.trim();
-  const pass=document.getElementById('nt-pass').value;
-  if(!nama||!id||!user||!pass){alert('Semua field wajib diisi.');return;}
-  if(pass.length<6){alert('Password minimal 6 karakter.');return;}
-  if(_adminTenants.find(t=>t.id===id)){alert('ID sudah digunakan. Pilih ID lain.');return;}
-  const newTenant={id,nama,authUser:user,aktif:true,createdAt:new Date().toISOString()};
-  const updatedTenants=[..._adminTenants,newTenant];
-  const fs=firebase.firestore();
-  const adminRef=fs.doc('bwifi/_superadmin');
-  const tenantRef=fs.doc('bwifi/'+id);
-  // Simpan daftar tenant ke _superadmin
-  adminRef.set({tenants:updatedTenants},{merge:true})
-    .then(()=>tenantRef.set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]}))
-    .then(()=>{
-      _adminDocRef=adminRef;
-      const url=`${location.origin}${location.pathname}?t=${id}`;
-      alert(`✅ User "${nama}" berhasil dibuat!\n\nLink: ${url}\nUsername: ${user}\nPassword: ${pass}`);
-      ['nt-nama','nt-id','nt-user','nt-pass'].forEach(k=>document.getElementById(k).value='');
-      document.getElementById('form-tambah-tenant').classList.remove('show');
-    })
-    .catch(e=>{
-      console.error(e);
-      alert('Gagal menyimpan: '+e.message+'\n\nPastikan Firestore Rules sudah diupdate di Firebase Console.');
-    });
+  try{
+    const nama=document.getElementById('nt-nama').value.trim();
+    const id=document.getElementById('nt-id').value.trim();
+    const user=document.getElementById('nt-user').value.trim();
+    const pass=document.getElementById('nt-pass').value;
+    if(!nama||!id||!user||!pass){alert('Semua field wajib diisi.');return;}
+    if(pass.length<6){alert('Password minimal 6 karakter.');return;}
+    if(_adminTenants.find(t=>t.id===id)){alert('ID sudah digunakan. Pilih ID lain.');return;}
+    // Pastikan firebase sudah siap
+    if(!firebase||!firebase.apps||!firebase.apps.length){
+      alert('Firebase belum siap. Tunggu sebentar lalu coba lagi.');return;
+    }
+    const fs=firebase.firestore();
+    if(!fs){alert('Firestore tidak tersedia.');return;}
+    const newTenant={id,nama,authUser:user,aktif:true,createdAt:new Date().toISOString()};
+    const updatedTenants=[..._adminTenants,newTenant];
+    const adminRef=fs.doc('bwifi/_superadmin');
+    const tenantRef=fs.doc('bwifi/'+id);
+    // Step 1: simpan ke _superadmin
+    adminRef.set({tenants:updatedTenants},{merge:true})
+      .then(()=>{
+        // Step 2: buat dokumen tenant baru
+        return tenantRef.set({authUser:user,authPass:pass,data:[],rekening:[],waTemplate:'',paketList:[]});
+      })
+      .then(()=>{
+        _adminDocRef=adminRef;
+        _adminTenants=updatedTenants;
+        renderTenantList();
+        const url=`${location.origin}${location.pathname}?t=${id}`;
+        alert('✅ User berhasil dibuat!\n\nNama: '+nama+'\nLink: '+url+'\nUsername: '+user+'\nPassword: '+pass);
+        ['nt-nama','nt-id','nt-user','nt-pass'].forEach(k=>document.getElementById(k).value='');
+        document.getElementById('form-tambah-tenant').classList.remove('show');
+      })
+      .catch(e=>{
+        if(e.code==='permission-denied'){
+          alert('❌ Akses ditolak Firestore!\n\nBuka Firebase Console dan update Rules:\nhttps://console.firebase.google.com/project/billing-wifi-1ef52/firestore/rules\n\nGanti dengan:\nmatch /bwifi/{docId} {\n  allow read, write: if true;\n}');
+        }else{
+          alert('❌ Error: '+e.code+'\n'+e.message);
+        }
+      });
+  }catch(err){
+    alert('❌ Error tidak terduga: '+err.message);
+  }
 }
 function masukKeTenant(id,nama){
   _tenantId=id;_adminViewingTenant=true;
