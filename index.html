@@ -858,7 +858,8 @@ let paketList=JSON.parse(localStorage.getItem(lsk('paket'))||'[]');
 let nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;
 
 let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
-  {id:101,nama:'Nazila',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  // Data kosong — user input sendiri
+  /*{id:101,nama:'Nazila',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:102,nama:'Toipah',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:103,nama:'Ismail',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:104,nama:'Iqbal',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
@@ -983,9 +984,9 @@ let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
   {id:10,nama:'Imam W',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:11,nama:'Winarso',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
   {id:12,nama:'Dafit Irawan',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
-  {id:13,nama:'Mursalin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},
+  {id:13,nama:'Mursalin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},*/
 ];
-let nextId=Math.max(...data.map(d=>d.id))+1;
+let nextId=data.length?Math.max(...data.map(d=>d.id))+1:1;
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
