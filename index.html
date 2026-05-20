@@ -295,6 +295,24 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 /* CETAK STRUK */
 .btn-struk{height:30px;padding:0 9px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:var(--font)}
 .btn-struk:active{background:#dcfce7}
+/* PRINT MENU */
+#print-overlay{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+#print-overlay.show{display:flex}
+.print-sheet{background:#fff;border-radius:18px 18px 0 0;padding:20px 16px 32px;width:100%;max-width:480px}
+.print-sheet-title{font-size:13px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:16px;letter-spacing:.3px}
+.print-options{display:flex;gap:10px}
+.print-opt{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:#fff;transition:all .15s;font-family:var(--font)}
+.print-opt:active{transform:scale(.97)}
+.print-opt.struk{border-color:#bbf7d0}
+.print-opt.struk:hover{background:#f0fdf4;border-color:#4ade80}
+.print-opt.invoice{border-color:#bfdbfe}
+.print-opt.invoice:hover{background:#eff6ff;border-color:#60a5fa}
+.print-opt i{font-size:28px}
+.print-opt.struk i{color:#15803d}
+.print-opt.invoice i{color:#1d4ed8}
+.print-opt-label{font-size:13px;font-weight:700;color:var(--text)}
+.print-opt-sub{font-size:10px;color:var(--muted);text-align:center}
+.print-cancel{width:100%;margin-top:12px;padding:12px;background:#f4f6f5;border:none;border-radius:10px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font)}
 /* GANTI PASSWORD */
 .hmenu-auth{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;gap:8px}
 .hmenu-auth-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font)}
@@ -345,6 +363,26 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <div class="login-field"><label>Password</label><input id="login-pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')cekLogin()"/></div>
     <div class="login-err" id="login-err"></div>
     <button class="login-btn" onclick="cekLogin()">Masuk</button>
+  </div>
+</div>
+
+<!-- PRINT MENU -->
+<div id="print-overlay" onclick="cekOverlay(event,'print-overlay')">
+  <div class="print-sheet">
+    <div class="print-sheet-title"><i class="ti ti-printer" style="font-size:15px;margin-right:5px"></i>PILIH FORMAT CETAK</div>
+    <div class="print-options">
+      <button class="print-opt struk" onclick="doCetak('struk')">
+        <i class="ti ti-receipt"></i>
+        <div class="print-opt-label">Struk</div>
+        <div class="print-opt-sub">Format thermal<br/>58mm / kasir</div>
+      </button>
+      <button class="print-opt invoice" onclick="doCetak('invoice')">
+        <i class="ti ti-file-invoice"></i>
+        <div class="print-opt-label">Invoice PDF</div>
+        <div class="print-opt-sub">Format A4<br/>profesional</div>
+      </button>
+    </div>
+    <button class="print-cancel" onclick="tutup('print-overlay')">Batal</button>
   </div>
 </div>
 
@@ -1459,7 +1497,7 @@ function renderData(){
         ${d.tagihan>0&&d.status!=='lunas'?`<button class="btn-bayar" onclick="bukaBayarCepat(${d.id})"><i class="ti ti-cash" style="font-size:14px"></i> ${d.dibayar>0&&d.dibayar<d.tagihan?'Bayar Sisa':'✓ Bayar'}</button>`:d.status==='lunas'?`<button class="btn-batal" onclick="batalLunas(${d.id})"><i class="ti ti-rotate-left" style="font-size:12px"></i> Batalkan</button>`:``}
         ${d.hp?`<button class="btn-wa" onclick="kirimWA('${safeHp}','${safeNama}',${d.tagihan},'${d.jatuhTempo||''}')"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button>
         <a class="btn-telp" href="tel:${(d.hp||'').replace(/[^0-9]/g,'')}"><i class="ti ti-phone" style="font-size:14px"></i></a>`:''}
-        <button class="btn-struk" onclick="cetakStruk(${d.id})"><i class="ti ti-printer" style="font-size:12px"></i> Struk</button>
+        <button class="btn-struk" onclick="bukaPrintMenu(${d.id})"><i class="ti ti-printer" style="font-size:12px"></i> Cetak</button>
         <button class="act-btn" onclick="editData(${d.id})"><i class="ti ti-edit" style="font-size:12px"></i></button>
         <button class="act-btn act-hapus" onclick="hapus(${d.id})"><i class="ti ti-trash" style="font-size:12px"></i></button>
       </div>
@@ -1468,88 +1506,177 @@ function renderData(){
   updateStats();
 }
 
-/* CETAK STRUK */
-function cetakStruk(id){
-  const d=data.find(x=>x.id===id);
+/* CETAK STRUK & INVOICE */
+let _printTargetId=null;
+function bukaPrintMenu(id){
+  _printTargetId=id;
+  document.getElementById('print-overlay').classList.add('show');
+}
+function doCetak(tipe){
+  tutup('print-overlay');
+  const d=data.find(x=>x.id===_printTargetId);
   if(!d)return;
+  if(tipe==='struk') buatStruk(d);
+  else buatInvoice(d);
+}
+function _printInfo(d){
   const tglCetak=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const jamCetak=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-  const noStruk='STR-'+String(id).padStart(4,'0')+'-'+new Date().getTime().toString().slice(-4);
+  const noDoc='INV-'+String(d.id).padStart(4,'0')+'-'+new Date().getTime().toString().slice(-4);
   const bulanTagihan=d.jatuhTempo?new Date(d.jatuhTempo).toLocaleDateString('id-ID',{month:'long',year:'numeric'}):'—';
   const sisa=d.tagihan-d.dibayar;
-  const statusLabel={lunas:'LUNAS ✓',belum:'BELUM BAYAR',hutang:'HUTANG'}[d.status]||d.status.toUpperCase();
+  const statusLabel={lunas:'LUNAS',belum:'BELUM BAYAR',hutang:'HUTANG'}[d.status]||d.status.toUpperCase();
   const statusColor={lunas:'#15803d',belum:'#b45309',hutang:'#dc2626'}[d.status]||'#333';
   const viaLabel=d.via==='transfer'?'Transfer Bank':'Cash / Tunai';
-  const rekTarget=d.rekTujuan?`<tr><td>Rek. Tujuan</td><td>:</td><td>${d.rekTujuan}</td></tr>`:'';
-  const catatanRow=d.catatan?`<tr><td colspan="3" style="padding-top:4px;color:#555;font-size:10px;font-style:italic">Catatan: ${d.catatan}</td></tr>`:'';
-  const paketRow=d.paket?`<tr><td>Paket</td><td>:</td><td>${d.paket}</td></tr>`:'';
-  const alamatRow=d.alamat?`<tr><td>Alamat</td><td>:</td><td>${d.alamat}</td></tr>`:'';
+  return{tglCetak,jamCetak,noDoc,bulanTagihan,sisa,statusLabel,statusColor,viaLabel};
+}
+function _openWin(html,w,h){
+  const win=window.open('','_blank','width='+w+',height='+h+',scrollbars=yes');
+  if(win){win.document.write(html);win.document.close();}
+  else alert('Popup diblok browser. Izinkan popup untuk mencetak.');
+}
 
-  const html=`<!DOCTYPE html>
-<html lang="id"><head><meta charset="UTF-8"/>
+/* ---- STRUK THERMAL ---- */
+function buatStruk(d){
+  const{tglCetak,jamCetak,noDoc,bulanTagihan,sisa,statusLabel,statusColor,viaLabel}=_printInfo(d);
+  const html=`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"/>
 <title>Struk - ${d.nama}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Courier New',Courier,monospace;font-size:12px;color:#111;background:#fff;width:300px;margin:0 auto;padding:12px 8px}
-.center{text-align:center}
-.logo{font-size:18px;font-weight:900;letter-spacing:2px}
-.sub{font-size:10px;color:#555;margin-top:2px}
-.divider{border:none;border-top:1px dashed #999;margin:8px 0}
-.divider-solid{border:none;border-top:2px solid #111;margin:8px 0}
+body{font-family:'Courier New',monospace;font-size:12px;color:#111;width:280px;margin:0 auto;padding:10px 6px}
+.c{text-align:center}.logo{font-size:16px;font-weight:900;letter-spacing:2px}
+.sub{font-size:9px;color:#555;margin-top:1px}
+hr.d{border:none;border-top:1px dashed #888;margin:6px 0}
+hr.s{border:none;border-top:2px solid #111;margin:6px 0}
 table{width:100%;border-collapse:collapse}
-td{padding:2px 0;vertical-align:top;font-size:11px}
-td:first-child{width:80px;color:#555}
-td:nth-child(2){width:10px;color:#555}
-.total-row td{font-size:13px;font-weight:900;padding-top:6px}
-.status-box{text-align:center;border:2px solid;border-radius:4px;padding:6px;margin:8px 0;font-size:14px;font-weight:900;letter-spacing:1px}
-.footer{text-align:center;font-size:10px;color:#777;margin-top:8px;line-height:1.6}
-@media print{
-  body{width:58mm;padding:4px}
-  @page{size:58mm auto;margin:0}
-}
+td{padding:1px 0;vertical-align:top;font-size:11px;line-height:1.4}
+td:first-child{width:76px;color:#666}td:nth-child(2){width:8px;color:#666}
+.sb{text-align:center;border:2px solid;border-radius:3px;padding:5px;margin:6px 0;font-size:13px;font-weight:900;letter-spacing:1px}
+.ft{text-align:center;font-size:9px;color:#777;margin-top:6px;line-height:1.6}
+@media print{body{width:58mm;padding:3px}@page{size:58mm auto;margin:0}}
 </style></head><body>
-<div class="center">
-  <div class="logo">📶 IURAN WIFI</div>
-  <div class="sub">Bukti Pembayaran Iuran Internet</div>
+<div class="c"><div class="logo">&#x1F4F6; IURAN WIFI</div><div class="sub">Bukti Pembayaran Internet</div></div>
+<hr class="s"/>
+<table>
+<tr><td>No. Struk</td><td>:</td><td>${noDoc}</td></tr>
+<tr><td>Tgl Cetak</td><td>:</td><td>${tglCetak} ${jamCetak}</td></tr>
+<tr><td>Tgl Bayar</td><td>:</td><td>${d.tgl?fTgl(d.tgl):'—'}</td></tr>
+</table>
+<hr class="d"/>
+<table>
+<tr><td>Nama</td><td>:</td><td><strong>${d.nama}</strong></td></tr>
+${d.alamat?`<tr><td>Alamat</td><td>:</td><td>${d.alamat}</td></tr>`:''}
+${d.paket?`<tr><td>Paket</td><td>:</td><td>${d.paket}</td></tr>`:''}
+<tr><td>Periode</td><td>:</td><td>${bulanTagihan}</td></tr>
+</table>
+<hr class="d"/>
+<table>
+<tr><td>Tagihan</td><td>:</td><td>${fRp(d.tagihan)}</td></tr>
+<tr><td>Dibayar</td><td>:</td><td><strong>${fRp(d.dibayar)}</strong></td></tr>
+${sisa>0?`<tr><td>Sisa</td><td>:</td><td style="color:#dc2626;font-weight:700">${fRp(sisa)}</td></tr>`:''}
+<tr><td>Metode</td><td>:</td><td>${viaLabel}</td></tr>
+${d.rekTujuan?`<tr><td>Rek. Tujuan</td><td>:</td><td>${d.rekTujuan}</td></tr>`:''}
+${d.catatan?`<tr><td colspan="3" style="font-style:italic;color:#555;font-size:10px">*${d.catatan}</td></tr>`:''}
+</table>
+<hr class="d"/>
+<div class="sb" style="color:${statusColor};border-color:${statusColor}">${statusLabel}</div>
+<hr class="d"/>
+<div class="ft">Terima kasih atas pembayaran Anda<br/>Simpan struk sebagai bukti pembayaran<br/><strong>— IURAN WIFI —</strong></div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+  _openWin(html,340,580);
+}
+
+/* ---- INVOICE PDF A4 ---- */
+function buatInvoice(d){
+  const{tglCetak,jamCetak,noDoc,bulanTagihan,sisa,statusLabel,statusColor,viaLabel}=_printInfo(d);
+  const rekInfo=rekening.length?rekening.map(r=>`<div style="margin-top:3px">• ${r.bank} – ${r.nama}: <strong>${r.norek}</strong></div>`).join(''):'';
+  const html=`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"/>
+<title>Invoice - ${d.nama}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;background:#fff;padding:32px 40px;max-width:700px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:3px solid #0F6E56}
+.brand-name{font-size:26px;font-weight:900;color:#0F6E56;letter-spacing:1px}
+.brand-sub{font-size:11px;color:#666;margin-top:3px}
+.inv-title{text-align:right}
+.inv-title h2{font-size:22px;font-weight:900;color:#0F6E56;letter-spacing:2px}
+.inv-title .inv-no{font-size:12px;color:#666;margin-top:4px}
+.inv-title .inv-status{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-top:6px;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.meta-box{background:#f8f9fa;border-radius:8px;padding:14px 16px}
+.meta-box h4{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.meta-box .val{font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.7}
+.meta-box .val small{font-size:11px;color:#666;font-weight:400}
+table.detail{width:100%;border-collapse:collapse;margin-bottom:20px}
+table.detail thead tr{background:#0F6E56;color:#fff}
+table.detail thead th{padding:10px 14px;text-align:left;font-size:12px;font-weight:600}
+table.detail tbody tr{border-bottom:1px solid #e5e7eb}
+table.detail tbody tr:last-child{border-bottom:none}
+table.detail tbody td{padding:10px 14px;font-size:13px;vertical-align:top}
+.summary{margin-left:auto;width:260px;margin-bottom:20px}
+.summary-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px dashed #e5e7eb}
+.summary-row:last-child{border-bottom:none;font-size:15px;font-weight:900;color:#0F6E56;padding-top:10px}
+.rekening-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px}
+.rekening-box h4{font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.footer{text-align:center;color:#aaa;font-size:11px;padding-top:20px;border-top:1px solid #e5e7eb;line-height:1.8}
+@media print{body{padding:16px 20px}@page{size:A4;margin:10mm}}
+</style></head><body>
+<div class="header">
+  <div><div class="brand-name">&#x1F4F6; IURAN WIFI</div><div class="brand-sub">Layanan Internet Mandiri</div></div>
+  <div class="inv-title">
+    <h2>INVOICE</h2>
+    <div class="inv-no">No: ${noDoc}</div>
+    <div class="inv-no">Tanggal: ${tglCetak}</div>
+    <div><span class="inv-status">${statusLabel}</span></div>
+  </div>
 </div>
-<hr class="divider-solid"/>
-<table>
-  <tr><td>No. Struk</td><td>:</td><td>${noStruk}</td></tr>
-  <tr><td>Tgl Cetak</td><td>:</td><td>${tglCetak} ${jamCetak}</td></tr>
-  <tr><td>Tgl Bayar</td><td>:</td><td>${d.tgl?fTgl(d.tgl):'—'}</td></tr>
-</table>
-<hr class="divider"/>
-<table>
-  <tr><td>Nama</td><td>:</td><td><strong>${d.nama}</strong></td></tr>
-  ${alamatRow}
-  ${paketRow}
-  <tr><td>Bulan</td><td>:</td><td>${bulanTagihan}</td></tr>
-</table>
-<hr class="divider"/>
-<table>
-  <tr><td>Tagihan</td><td>:</td><td>${fRp(d.tagihan)}</td></tr>
-  <tr><td>Dibayar</td><td>:</td><td><strong>${fRp(d.dibayar)}</strong></td></tr>
-  ${sisa>0?`<tr><td>Sisa</td><td>:</td><td style="color:#dc2626;font-weight:700">${fRp(sisa)}</td></tr>`:''}
-  <tr><td>Metode</td><td>:</td><td>${viaLabel}</td></tr>
-  ${rekTarget}
-  ${catatanRow}
-</table>
-<hr class="divider"/>
-<div class="status-box" style="color:${statusColor};border-color:${statusColor}">
-  ${statusLabel}
+<div class="meta">
+  <div class="meta-box">
+    <h4>Data Pelanggan</h4>
+    <div class="val">
+      ${d.nama}<br/>
+      <small>${d.alamat||'—'}</small><br/>
+      <small>HP: ${d.hp||'—'}</small>
+      ${d.paket?`<br/><small>Paket: ${d.paket}</small>`:''}
+    </div>
+  </div>
+  <div class="meta-box">
+    <h4>Detail Pembayaran</h4>
+    <div class="val">
+      Periode: ${bulanTagihan}<br/>
+      <small>Tgl Bayar: ${d.tgl?fTgl(d.tgl):'—'}</small><br/>
+      <small>Metode: ${viaLabel}</small>
+      ${d.rekTujuan?`<br/><small>Rek. Tujuan: ${d.rekTujuan}</small>`:''}
+    </div>
+  </div>
 </div>
-<hr class="divider"/>
+<table class="detail">
+  <thead><tr><th>Keterangan</th><th>Periode</th><th style="text-align:right">Jumlah</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Iuran Internet WiFi${d.paket?` – ${d.paket}`:''}</td>
+      <td>${bulanTagihan}</td>
+      <td style="text-align:right">${fRp(d.tagihan)}</td>
+    </tr>
+    ${d.catatan?`<tr><td colspan="3" style="color:#888;font-size:11px;font-style:italic">Catatan: ${d.catatan}</td></tr>`:''}
+  </tbody>
+</table>
+<div class="summary">
+  <div class="summary-row"><span>Total Tagihan</span><span>${fRp(d.tagihan)}</span></div>
+  <div class="summary-row"><span>Dibayar</span><span>${fRp(d.dibayar)}</span></div>
+  ${sisa>0?`<div class="summary-row" style="color:#dc2626"><span>Sisa Tagihan</span><span>${fRp(sisa)}</span></div>`:''}
+  <div class="summary-row"><span>Status</span><span style="color:${statusColor}">${statusLabel}</span></div>
+</div>
+${d.via==='transfer'&&rekInfo?`<div class="rekening-box"><h4>Informasi Rekening Pembayaran</h4>${rekInfo}</div>`:''}
 <div class="footer">
-  Terima kasih atas pembayaran Anda<br/>
-  Simpan struk ini sebagai bukti pembayaran<br/>
-  <strong>— IURAN WIFI —</strong>
+  Dokumen ini dicetak pada ${tglCetak} pukul ${jamCetak}<br/>
+  Invoice ini merupakan bukti pembayaran yang sah<br/>
+  <strong>IURAN WIFI</strong> — Terima kasih atas kepercayaan Anda
 </div>
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`;
-
-  const w=window.open('','_blank','width=350,height=600,scrollbars=yes');
-  if(w){w.document.write(html);w.document.close();}
-  else{alert('Popup diblok browser. Izinkan popup untuk mencetak struk.');}
+  _openWin(html,760,900);
 }
 
 /* ANALISA */
