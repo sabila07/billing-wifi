@@ -1229,7 +1229,7 @@ function connectFirestore(){
     _fbUnsub=docRef.onSnapshot(snap=>{
       if(_fbRetry){clearTimeout(_fbRetry);_fbRetry=null;}
       if(!snap.exists){
-        docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList});
+        docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList},{merge:true});
         fbReady=true;_lastSyncTime=Date.now();setSyncStatus('ok','Terhubung ✓');return;
       }
       applyFirestoreData(snap.data());
@@ -1854,7 +1854,7 @@ function simpanRekening(){
   renderRekening();
   tutup('overlay-rek');
   if(fbReady&&window._docRef){
-    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList})
+    window._docRef.set({data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList},{merge:true})
       .then(()=>setSyncStatus('ok','Rekening tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync'));
   }
   alert('Rekening & template pesan WA berhasil disimpan ✓');
