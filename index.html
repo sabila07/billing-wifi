@@ -292,6 +292,23 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .login-err{color:#A32D2D;font-size:12px;text-align:center;min-height:18px;margin-bottom:8px;font-weight:500}
 .login-btn{width:100%;padding:13px;background:#0F6E56;color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:.3px}
 .login-btn:active{background:#085041}
+/* ONT WIDGET */
+.ont-widget{margin:0 12px 8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 10px;font-size:11px}
+.ont-widget.offline{background:#fff1f2;border-color:#fecdd3}
+.ont-widget.loading{background:#f8fafc;border-color:#e2e8f0;color:#94a3b8}
+.ont-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ont-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ont-dot.online{background:#22c55e}
+.ont-dot.offline{background:#ef4444}
+.ont-dot.loading{background:#94a3b8;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.ont-info{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.ont-chip{background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:2px 7px;font-size:10px;color:#334155;white-space:nowrap}
+.ont-chip.warn{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.ont-chip.err{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+.btn-isolir{font-size:10px;padding:3px 8px;border:none;border-radius:5px;cursor:pointer;font-family:var(--font);font-weight:600;margin-left:auto}
+.btn-isolir.off{background:#fee2e2;color:#dc2626}
+.btn-isolir.on{background:#dcfce7;color:#15803d}
 /* CETAK STRUK */
 .btn-struk{height:30px;padding:0 9px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:var(--font)}
 .btn-struk:active{background:#dcfce7}
@@ -528,6 +545,11 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
         <div class="fg"><label>Tanggal Bayar</label><input type="date" id="f-tgl"/></div>
       </div>
       <div class="fg"><label>Catatan</label><textarea id="f-catatan" placeholder="Contoh: bayar separuh dulu..."></textarea></div>
+      <div class="fg" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-top:2px">
+        <label style="color:#0369a1"><i class="ti ti-router" style="font-size:12px"></i> Data ONT / OLT (Opsional)</label>
+        <input type="text" id="f-ont-sn" placeholder="Serial Number ONT (contoh: HSGQ1234ABCD)" style="margin-top:6px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/>
+        <div class="fg-hint">Isi jika ingin cek sinyal & isolir otomatis dari OLT</div>
+      </div>
       <button class="btn-simpan" onclick="simpan()"><i class="ti ti-check"></i> Simpan Data</button>
     </div>
   </div>
@@ -639,6 +661,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     </div>
     <div class="hmenu-auth">
       <button class="hmenu-auth-btn" style="background:var(--blue-l);color:var(--blue-d)" onclick="bukaGantiPassword();tutupHomeMenu()"><i class="ti ti-lock" style="font-size:14px"></i> Ganti Password</button>
+      <button class="hmenu-auth-btn" style="background:#f0f9ff;color:#0369a1" onclick="bukaOLTSetting();tutupHomeMenu()"><i class="ti ti-router" style="font-size:14px"></i> Setting OLT</button>
       <button class="hmenu-auth-btn" style="background:var(--red-l);color:var(--red-d)" onclick="logout()"><i class="ti ti-logout" style="font-size:14px"></i> Keluar</button>
     </div>
   </div>
@@ -752,6 +775,42 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       <div class="fg"><label>Nama Paket</label><input type="text" id="np-nama" placeholder="Paket 10 Mbps"/></div>
       <div class="fg"><label>Harga (Rp)</label><input type="number" id="np-harga" placeholder="150000" inputmode="numeric"/></div>
       <button class="btn-simpan" style="margin-top:4px" onclick="tambahPaket()"><i class="ti ti-plus" style="font-size:15px"></i> Tambah Paket</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL SETTING OLT -->
+<div class="page-overlay" id="panel-olt-setting">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-olt-setting')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-router" style="font-size:20px"></i>
+    <span class="page-title">Setting OLT Hioso</span>
+  </div>
+  <div class="page-body">
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#0369a1;line-height:1.6">
+      <strong><i class="ti ti-info-circle"></i> Panduan:</strong><br/>
+      Isi URL backend VPS dan API Key setelah server dipasang.<br/>
+      Contoh URL: <code>http://103.x.x.x/api</code>
+    </div>
+    <div class="fg"><label>URL Backend VPS</label>
+      <input type="url" id="olt-url" placeholder="http://IP_VPS_ANDA/api"/>
+    </div>
+    <div class="fg"><label>API Key</label>
+      <input type="text" id="olt-key" placeholder="Kunci rahasia dari file .env"/>
+    </div>
+    <button class="btn-simpan" onclick="simpanKonfigOLT()"><i class="ti ti-check"></i> Simpan & Test Koneksi</button>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px">STATUS KONEKSI</div>
+      <button onclick="testOLTKoneksi()" style="width:100%;padding:10px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:var(--font)"><i class="ti ti-plug"></i> Test Koneksi Sekarang</button>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--muted);line-height:1.8">
+        <strong>Cara pasang backend di VPS:</strong><br/>
+        1. Upload folder <code>billing-wifi-backend</code> ke VPS<br/>
+        2. Jalankan: <code>bash install.sh</code><br/>
+        3. Edit file <code>.env</code> sesuai OLT Anda<br/>
+        4. Restart: <code>pm2 restart billing-olt-api</code>
+      </div>
     </div>
   </div>
 </div>
@@ -1493,6 +1552,12 @@ function renderData(){
       </div>
       ${d.dibayar>0&&d.dibayar<d.tagihan?`<div class="sisa-bar"><span class="sisa-lbl"><i class="ti ti-alert-circle" style="font-size:13px"></i> Sisa Tagihan</span><span class="sisa-val">${fRp(d.tagihan-d.dibayar)}</span></div>`:''}
       ${hasCat?`<div class="card-catatan"><i class="ti ti-notes" style="font-size:12px;flex-shrink:0"></i>${fb}${d.catatan?`<span>${d.catatan}</span>`:''}</div>`:''}
+      ${d.ontSn?`<div class="ont-widget loading" id="ont-${d.id}">
+        <div class="ont-row">
+          <div class="ont-dot loading"></div>
+          <span style="color:#94a3b8;font-size:10px">Memuat data ONT ${d.ontSn}...</span>
+        </div>
+      </div>`:''}
       <div class="card-actions">
         ${d.tagihan>0&&d.status!=='lunas'?`<button class="btn-bayar" onclick="bukaBayarCepat(${d.id})"><i class="ti ti-cash" style="font-size:14px"></i> ${d.dibayar>0&&d.dibayar<d.tagihan?'Bayar Sisa':'✓ Bayar'}</button>`:d.status==='lunas'?`<button class="btn-batal" onclick="batalLunas(${d.id})"><i class="ti ti-rotate-left" style="font-size:12px"></i> Batalkan</button>`:``}
         ${d.hp?`<button class="btn-wa" onclick="kirimWA('${safeHp}','${safeNama}',${d.tagihan},'${d.jatuhTempo||''}')"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button>
@@ -1504,6 +1569,121 @@ function renderData(){
     </div>`;
   }).join('');
   updateStats();
+  // Load widget ONT setelah kartu dirender
+  setTimeout(loadAllOntWidgets, 300);
+}
+
+/* ===== OLT HIOSO API ===== */
+// Konfigurasi — isi setelah backend VPS aktif
+let OLT_API_URL = localStorage.getItem('olt_api_url') || '';  // contoh: http://IP_VPS/api
+let OLT_API_KEY = localStorage.getItem('olt_api_key') || '';
+
+function bukaOLTSetting(){
+  document.getElementById('olt-url').value=OLT_API_URL;
+  document.getElementById('olt-key').value=OLT_API_KEY;
+  document.getElementById('panel-olt-setting').classList.add('show');
+}
+function simpanKonfigOLT(){
+  const url=(document.getElementById('olt-url')||{}).value||'';
+  const key=(document.getElementById('olt-key')||{}).value||'';
+  OLT_API_URL=url.replace(/\/$/,'');
+  OLT_API_KEY=key;
+  localStorage.setItem('olt_api_url',OLT_API_URL);
+  localStorage.setItem('olt_api_key',OLT_API_KEY);
+  alert('Konfigurasi OLT disimpan ✓\nMencoba koneksi...');
+  testOLTKoneksi();
+}
+async function testOLTKoneksi(){
+  if(!OLT_API_URL){alert('URL backend belum diisi.');return;}
+  try{
+    const r=await fetch(OLT_API_URL.replace('/api','/'),{headers:{'x-api-key':OLT_API_KEY}});
+    const d=await r.json();
+    alert('✅ Terhubung ke backend!\n'+JSON.stringify(d,null,2));
+  }catch(e){alert('❌ Gagal konek: '+e.message);}
+}
+
+// Load data ONT untuk semua kartu yang ada SNnya
+function loadAllOntWidgets(){
+  if(!OLT_API_URL||!OLT_API_KEY) return;
+  data.filter(d=>d.ontSn).forEach(d=>{
+    loadOntWidget(d);
+  });
+}
+
+async function loadOntWidget(d){
+  const el=document.getElementById('ont-'+d.id);
+  if(!el||!OLT_API_URL) return;
+  try{
+    const r=await fetch(`${OLT_API_URL}/ont/${d.ontSn}`,{
+      headers:{'x-api-key':OLT_API_KEY}
+    });
+    const ont=await r.json();
+    renderOntWidget(el, d, ont);
+  }catch(e){
+    el.innerHTML=`<div class="ont-row"><div class="ont-dot offline"></div><span style="color:#be123c;font-size:10px"><i class="ti ti-wifi-off"></i> Gagal ambil data ONT (backend tidak aktif)</span></div>`;
+    el.className='ont-widget offline';
+  }
+}
+
+function renderOntWidget(el, d, ont){
+  if(ont.status==='not_found'){
+    el.className='ont-widget offline';
+    el.innerHTML=`<div class="ont-row"><div class="ont-dot offline"></div><span style="font-size:10px;color:#be123c">ONT ${d.ontSn} tidak ditemukan di OLT</span></div>`;
+    return;
+  }
+  const isOnline = ont.status==='online';
+  el.className='ont-widget'+(isOnline?'':' offline');
+
+  // Kualitas sinyal
+  const rxP=ont.rxPower;
+  let rxChip='';
+  if(rxP!==undefined){
+    const rxClass=rxP>=-20?'':rxP>=-24?'':rxP>=-27?'warn':'err';
+    const rxIcon=rxP>=-20?'📶':rxP>=-24?'📶':rxP>=-27?'⚠️':'🔴';
+    rxChip=`<span class="ont-chip ${rxClass}">${rxIcon} ${rxP} dBm</span>`;
+  }
+  const distChip=ont.distanceKm?`<span class="ont-chip"><i class="ti ti-ruler-2" style="font-size:10px"></i> ${ont.distanceKm} km</span>`:'';
+  const modelChip=ont.model?`<span class="ont-chip"><i class="ti ti-router" style="font-size:10px"></i> ${ont.model}</span>`:'';
+  const uptimeChip=ont.uptime?`<span class="ont-chip">⏱ ${ont.uptime}</span>`:'';
+  const isolirBtn=ont.port?`<button class="btn-isolir ${isOnline?'off':'on'}" onclick="toggleIsolir(${d.id},'${ont.port}','${ont.ontId}',${isOnline})">${isOnline?'⛔ Isolir':'✅ Aktifkan'}</button>`:'';
+
+  el.innerHTML=`
+    <div class="ont-row">
+      <div class="ont-dot ${isOnline?'online':'offline'}"></div>
+      <strong style="font-size:10px;color:${isOnline?'#15803d':'#dc2626'}">${isOnline?'Online':'Offline'}</strong>
+      <div class="ont-info">${rxChip}${distChip}${modelChip}${uptimeChip}</div>
+      ${isolirBtn}
+    </div>`;
+}
+
+async function toggleIsolir(pelangganId, port, ontId, isOnline){
+  const aksi = isOnline ? 'isolir' : 'aktifkan';
+  const konfirm = isOnline
+    ? 'Isolir pelanggan ini? Internet akan diputus.'
+    : 'Aktifkan kembali internet pelanggan ini?';
+  if(!confirm(konfirm)) return;
+  const d=data.find(x=>x.id===pelangganId);
+  if(!d) return;
+  const el=document.getElementById('ont-'+pelangganId);
+  if(el) el.innerHTML=`<div class="ont-row"><div class="ont-dot loading"></div><span style="font-size:10px;color:#94a3b8">Mengirim perintah ke OLT...</span></div>`;
+  try{
+    const r=await fetch(`${OLT_API_URL}/ont/${d.ontSn}/${aksi}`,{
+      method:'POST',
+      headers:{'x-api-key':OLT_API_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({port,ontId})
+    });
+    const res=await r.json();
+    if(res.success){
+      alert(`✅ Berhasil ${aksi} ONT ${d.ontSn}`);
+      setTimeout(()=>loadOntWidget(d),2000);
+    }else{
+      alert('❌ Gagal: '+(res.error||''));
+      loadOntWidget(d);
+    }
+  }catch(e){
+    alert('❌ Error: '+e.message);
+    loadOntWidget(d);
+  }
 }
 
 /* CETAK STRUK & INVOICE */
@@ -1997,6 +2177,7 @@ function bukaModal(id){
     document.getElementById('f-jatuh-tempo').value=d.jatuhTempo||'';
     document.getElementById('f-tgl').value=d.tgl||'';
     document.getElementById('f-catatan').value=d.catatan||'';
+    document.getElementById('f-ont-sn').value=d.ontSn||'';
   }else{
     document.getElementById('sheet-judul').textContent='Tambah Pelanggan';
     ['f-nama','f-hp','f-alamat','f-catatan'].forEach(i=>document.getElementById(i).value='');
@@ -2026,11 +2207,12 @@ function simpan(){
   const jatuhTempo=document.getElementById('f-jatuh-tempo').value;
   const tgl=document.getElementById('f-tgl').value;
   const catatan=document.getElementById('f-catatan').value.trim();
+  const ontSn=document.getElementById('f-ont-sn').value.trim().toUpperCase();
   if(!nama){alert('Nama wajib diisi.');return;}
   const namaKey=nama.toLowerCase();
   const duplikat=data.find(x=>x.nama.trim().toLowerCase()===namaKey&&x.id!==editId);
   if(duplikat){alert('Nama "'+duplikat.nama+'" sudah ada di daftar. Gunakan nama berbeda atau tambahkan keterangan (contoh: Budi (2)).');return;}
-  const obj={nama,hp,alamat,tagihan,dibayar,status,via,koneksi,jatuhTempo,tgl,catatan};
+  const obj={nama,hp,alamat,tagihan,dibayar,status,via,koneksi,jatuhTempo,tgl,catatan,ontSn};
   if(editId){const idx=data.findIndex(x=>x.id===editId);data[idx]={id:editId,...obj};}
   else{data.push({id:nextId++,...obj});}
   save();tutup('overlay');renderData();
