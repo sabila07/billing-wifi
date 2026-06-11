@@ -1138,6 +1138,7 @@ let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
 let nextId=data.length?Math.max(...data.map(d=>d.id))+1:1;
 let arsip=JSON.parse(localStorage.getItem(lsk('arsip'))||'{}');
 let periode=localStorage.getItem(lsk('periode'))||'';
+let _dataGuardCount=data.length; // proteksi: jumlah data terakhir yang diketahui valid
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
@@ -1413,6 +1414,8 @@ function applyFirestoreData(val){
   }
   if(src.data&&src.data.length){
     data=src.data.sort((a,b)=>a.id-b.id);
+    _dataGuardCount=data.length;
+    try{localStorage.setItem(lsk('data_backup'),JSON.stringify({t:Date.now(),n:data.length,data}));}catch(e){}
     nextId=Math.max(...data.map(d=>d.id))+1;
     localStorage.setItem(lsk('data'),JSON.stringify(data));
     renderData();if(activeTab==='rekap')renderRekap();if(activeTab==='analisa')renderAnalisa();
@@ -1506,6 +1509,16 @@ function initFirebase(){
 
 /* ===== HELPERS ===== */
 function save(){
+  // PROTEKSI ANTI-HILANG: jangan pernah menimpa data yang ada dengan array kosong
+  if(data.length===0 && _dataGuardCount>0){
+    console.warn('save() dibatalkan: mencegah menimpa '+_dataGuardCount+' data dengan kosong');
+    setSyncStatus('err','Simpan dibatalkan (proteksi data kosong)');
+    return;
+  }
+  if(data.length>0){
+    _dataGuardCount=data.length;
+    try{localStorage.setItem(lsk('data_backup'),JSON.stringify({t:Date.now(),n:data.length,data}));}catch(e){}
+  }
   localStorage.setItem(lsk('data'),JSON.stringify(data));
   if(window._docRef){
     setSyncStatus('syncing','Menyimpan...');
