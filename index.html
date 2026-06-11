@@ -226,6 +226,15 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .page-body{flex:1;overflow-y:auto;padding:16px}
 .ex-count{background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-weight:700;color:var(--green-d);text-align:center;margin-bottom:14px}
 #map{width:100%;height:calc(100vh - 58px)}
+.btn-mini{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 10px;font-size:12px;font-weight:600;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--text);cursor:pointer}
+.btn-mini:active{background:#f1f5f9}
+.odp-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.odp-item-icon{width:38px;height:38px;border-radius:9px;background:#f0fdf4;color:#15803d;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.odp-item-info{flex:1;min-width:0}
+.odp-item-nama{font-weight:700;font-size:14px}
+.odp-item-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.odp-cap-bar{height:5px;border-radius:3px;background:#e5e7eb;margin-top:5px;overflow:hidden}
+.odp-cap-fill{height:100%;border-radius:3px}
 .hmenu-rek{padding:0 16px 16px;border-top:1px solid var(--border);margin-top:4px}
 .hmenu-rek-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:12px 0 8px;display:flex;align-items:center;justify-content:space-between}
 .hmenu-rek-edit{background:rgba(24,95,165,.1);border:none;border-radius:6px;color:var(--blue-d);font-size:11px;font-weight:600;padding:3px 9px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:3px}
@@ -276,6 +285,8 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .wa-send-btn{background:#25D366;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
 .wa-clear-btn{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:20px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
 #overlay-pppoe{z-index:410}
+#overlay-odp{z-index:450}
+#panel-pick-map{z-index:460}
 /* LOGIN */
 #login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
 #login-screen.show{display:flex}
@@ -598,6 +609,19 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
         <label style="color:#0369a1"><i class="ti ti-router" style="font-size:12px"></i> Data ONT / OLT (Opsional)</label>
         <input type="text" id="f-ont-sn" placeholder="Serial Number ONT (contoh: HSGQ1234ABCD)" style="margin-top:6px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/>
         <div class="fg-hint">Isi jika ingin cek sinyal & isolir otomatis dari OLT</div>
+      </div>
+      <div class="fg" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-top:2px">
+        <label style="color:#15803d"><i class="ti ti-router" style="font-size:12px"></i> ODP & Lokasi (Opsional)</label>
+        <select id="f-odp" style="margin-top:6px"><option value="">— Pilih ODP —</option></select>
+        <div class="fg-row" style="margin-top:6px">
+          <div class="fg"><input type="number" step="any" id="f-lat" placeholder="Latitude"/></div>
+          <div class="fg"><input type="number" step="any" id="f-lng" placeholder="Longitude"/></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button type="button" class="btn-mini" onclick="ambilGpsPelanggan()" style="flex:1"><i class="ti ti-current-location" style="font-size:13px"></i> GPS Saat Ini</button>
+          <button type="button" class="btn-mini" onclick="pilihLokasiPeta('pelanggan')" style="flex:1"><i class="ti ti-map-pin" style="font-size:13px"></i> Pilih di Peta</button>
+        </div>
+        <div class="fg-hint">Lokasi dipakai untuk pin di Peta Pelanggan</div>
       </div>
       <button class="btn-simpan" onclick="simpan()"><i class="ti ti-check"></i> Simpan Data</button>
     </div>
@@ -926,7 +950,11 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <span class="page-title">ODP</span>
   </div>
   <div class="page-body" id="odp-body">
-    <div class="empty"><i class="ti ti-router"></i><p>Belum ada data ODP.<br>Fitur ini akan segera tersedia.</p></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn-mini" style="flex:1;padding:11px" onclick="bukaModalOdp()"><i class="ti ti-plus" style="font-size:14px"></i> Tambah ODP</button>
+      <button class="btn-mini" style="flex:1;padding:11px" onclick="bukaPanel('peta-odp')"><i class="ti ti-map-2" style="font-size:14px"></i> Peta ODP</button>
+    </div>
+    <div id="odp-list-render"></div>
   </div>
 </div>
 
@@ -940,6 +968,63 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   <div class="page-body" style="padding:0;display:flex;flex-direction:column">
     <div id="map"></div>
     <div id="peta-info" style="padding:10px 16px;font-size:11px;color:var(--muted);text-align:center;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- PETA ODP -->
+<div class="page-overlay" id="panel-peta-odp">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-peta-odp')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-map-2" style="font-size:20px"></i>
+    <span class="page-title">Peta ODP</span>
+  </div>
+  <div class="page-body" style="padding:0;display:flex;flex-direction:column">
+    <div id="map-odp" style="width:100%;height:calc(100vh - 58px)"></div>
+    <div id="peta-odp-info" style="padding:10px 16px;font-size:11px;color:var(--muted);text-align:center;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- MODAL ODP -->
+<div class="overlay" id="overlay-odp" onclick="cekOverlay(event,'overlay-odp')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="odp-sheet-judul">Tambah ODP</h2>
+      <button class="sheet-close" onclick="tutup('overlay-odp')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="fg"><label>Nama ODP</label><input type="text" id="o-nama" placeholder="Contoh: ODP-01 Dusun Krajan"/></div>
+      <div class="fg-row">
+        <div class="fg"><label>Kapasitas Port</label><input type="number" id="o-kapasitas" placeholder="8" min="0"/></div>
+        <div class="fg"><label>Alamat / Lokasi</label><input type="text" id="o-alamat" placeholder="Patokan lokasi"/></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Latitude</label><input type="number" step="any" id="o-lat" placeholder="-7.25"/></div>
+        <div class="fg"><label>Longitude</label><input type="number" step="any" id="o-lng" placeholder="110.0"/></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button type="button" class="btn-mini" onclick="ambilGpsOdp()" style="flex:1"><i class="ti ti-current-location" style="font-size:13px"></i> GPS Saat Ini</button>
+        <button type="button" class="btn-mini" onclick="pilihLokasiPeta('odp')" style="flex:1"><i class="ti ti-map-pin" style="font-size:13px"></i> Pilih di Peta</button>
+      </div>
+      <div class="fg" style="margin-top:8px"><label>Catatan</label><textarea id="o-catatan" placeholder="Opsional"></textarea></div>
+      <button class="btn-simpan" onclick="simpanOdp()"><i class="ti ti-check"></i> Simpan ODP</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PILIH LOKASI -->
+<div class="page-overlay" id="panel-pick-map">
+  <div class="page-header">
+    <button class="page-back" onclick="tutupPanel('panel-pick-map')"><i class="ti ti-arrow-left"></i></button>
+    <i class="ti ti-map-pin" style="font-size:20px"></i>
+    <span class="page-title">Ketuk Lokasi di Peta</span>
+  </div>
+  <div class="page-body" style="padding:0;display:flex;flex-direction:column">
+    <div id="map-pick" style="width:100%;flex:1;min-height:0"></div>
+    <div style="padding:10px 16px;display:flex;gap:8px;align-items:center;flex-shrink:0">
+      <div id="pick-info" style="flex:1;font-size:12px;color:var(--muted)">Ketuk peta untuk menandai lokasi…</div>
+      <button class="btn-simpan" style="width:auto;padding:10px 18px;margin:0" onclick="simpanPickLokasi()"><i class="ti ti-check"></i> Pakai</button>
+    </div>
   </div>
 </div>
 
@@ -1005,6 +1090,8 @@ let rekening=JSON.parse(localStorage.getItem(lsk('rek'))||'null')||[
 let waTemplate=localStorage.getItem(lsk('watemplate'))||'Halo *{nama}*, tagihan WiFi bulan *{bulan}* sebesar *{tagihan}* belum kami terima.\n\nMohon segera lakukan pembayaran. Bisa transfer ke:\n{rekening}\n\nTerima kasih 🙏';
 let paketList=JSON.parse(localStorage.getItem(lsk('paket'))||'[]');
 let nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;
+let odpList=JSON.parse(localStorage.getItem(lsk('odp'))||'[]');
+let nextOdpId=odpList.length?Math.max(...odpList.map(o=>o.id))+1:1;
 
 let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
   // Data kosong — user input sendiri
@@ -1425,6 +1512,7 @@ function applyFirestoreData(val){
   if(src.authUser){_authUser=src.authUser;localStorage.setItem(lsk('auth_user'),src.authUser);}
   if(src.authPass){_authPass=src.authPass;localStorage.setItem(lsk('auth_pass'),src.authPass);}
   if(src.paketList){paketList=src.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem(lsk('paket'),JSON.stringify(paketList));}
+  if(src.odpList){odpList=src.odpList;nextOdpId=odpList.length?Math.max(...odpList.map(o=>o.id))+1:1;localStorage.setItem(lsk('odp'),JSON.stringify(odpList));if(document.getElementById('panel-odp')&&document.getElementById('panel-odp').classList.contains('show'))renderOdp();}
   if(src.arsip){arsip=src.arsip;localStorage.setItem(lsk('arsip'),JSON.stringify(arsip));}
   if(typeof src.periode==='string'&&src.periode){periode=src.periode;localStorage.setItem(lsk('periode'),periode);}
 }
@@ -1524,10 +1612,10 @@ function save(){
     setSyncStatus('syncing','Menyimpan...');
     let obj;
     if(_tenantId==='main'){
-      obj={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,arsip:arsip,periode:periode};
+      obj={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,odpList:odpList,arsip:arsip,periode:periode};
     }else{
       obj={};
-      obj['_tenant_'+_tenantId]={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,arsip:arsip,periode:periode};
+      obj['_tenant_'+_tenantId]={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,odpList:odpList,arsip:arsip,periode:periode};
     }
     window._docRef.set(obj,{merge:true})
       .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
@@ -2230,9 +2318,13 @@ function bukaStatDetail(status,label){
 function bukaModal(id){
   editId=id||null;
   const ts=TODAY.toISOString().split('T')[0];
+  renderOdpDropdown();
   if(editId){
     const d=data.find(x=>x.id===editId);
     document.getElementById('sheet-judul').textContent='Edit Pelanggan';
+    document.getElementById('f-odp').value=d.odpId||'';
+    document.getElementById('f-lat').value=(d.lat!=null?d.lat:'');
+    document.getElementById('f-lng').value=(d.lng!=null?d.lng:'');
     document.getElementById('f-nama').value=d.nama;
     document.getElementById('f-hp').value=d.hp||'';
     document.getElementById('f-alamat').value=d.alamat||'';
@@ -2247,7 +2339,7 @@ function bukaModal(id){
     document.getElementById('f-ont-sn').value=d.ontSn||'';
   }else{
     document.getElementById('sheet-judul').textContent='Tambah Pelanggan';
-    ['f-nama','f-hp','f-alamat','f-catatan'].forEach(i=>document.getElementById(i).value='');
+    ['f-nama','f-hp','f-alamat','f-catatan','f-odp','f-lat','f-lng'].forEach(i=>document.getElementById(i).value='');
     ['f-tagihan','f-dibayar'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-status').value='lunas';
     document.getElementById('f-via').value='cash';
@@ -2275,11 +2367,16 @@ function simpan(){
   const tgl=document.getElementById('f-tgl').value;
   const catatan=document.getElementById('f-catatan').value.trim();
   const ontSn=document.getElementById('f-ont-sn').value.trim().toUpperCase();
+  const odpId=parseInt(document.getElementById('f-odp').value)||0;
+  const latRaw=document.getElementById('f-lat').value.trim();
+  const lngRaw=document.getElementById('f-lng').value.trim();
+  const lat=latRaw===''?null:parseFloat(latRaw);
+  const lng=lngRaw===''?null:parseFloat(lngRaw);
   if(!nama){alert('Nama wajib diisi.');return;}
   const namaKey=nama.toLowerCase();
   const duplikat=data.find(x=>x.nama.trim().toLowerCase()===namaKey&&x.id!==editId);
   if(duplikat){alert('Nama "'+duplikat.nama+'" sudah ada di daftar. Gunakan nama berbeda atau tambahkan keterangan (contoh: Budi (2)).');return;}
-  const obj={nama,hp,alamat,tagihan,dibayar,status,via,koneksi,jatuhTempo,tgl,catatan,ontSn};
+  const obj={nama,hp,alamat,tagihan,dibayar,status,via,koneksi,jatuhTempo,tgl,catatan,ontSn,odpId,lat,lng};
   if(editId){const idx=data.findIndex(x=>x.id===editId);data[idx]={id:editId,...obj};}
   else{data.push({id:nextId++,...obj});}
   save();tutup('overlay');renderData();
@@ -2612,6 +2709,8 @@ function bukaPanel(nama){
   tutupHomeMenu();
   document.getElementById('panel-'+nama).classList.add('show');
   if(nama==='peta')initPeta();
+  if(nama==='odp')renderOdp();
+  if(nama==='peta-odp')setTimeout(initPetaOdp,250);
 }
 function tutupPanel(id){
   document.getElementById(id).classList.remove('show');
@@ -2802,19 +2901,181 @@ function hapusPaket(id){
   renderPaketDropdown();
 }
 
-/* ===== PETA ===== */
+/* ===== ODP ===== */
+let editOdpId=null;
+function jmlPelangganOdp(odpId){return data.filter(d=>d.odpId===odpId).length;}
+function bukaPanelOdp(){renderOdp();document.getElementById('panel-odp').classList.add('show');}
+function renderOdp(){
+  const el=document.getElementById('odp-list-render');
+  if(!el)return;
+  if(!odpList.length){el.innerHTML='<div class="empty"><i class="ti ti-router"></i><p>Belum ada data ODP.<br>Ketuk "Tambah ODP" untuk memulai.</p></div>';return;}
+  el.innerHTML=odpList.map(o=>{
+    const terpakai=jmlPelangganOdp(o.id);
+    const kap=+o.kapasitas||0;
+    const pct=kap>0?Math.min(100,Math.round(terpakai/kap*100)):0;
+    const warna=kap>0&&terpakai>=kap?'#ef4444':(pct>=80?'#f59e0b':'#22c55e');
+    const adaLok=o.lat!=null&&o.lng!=null;
+    return `<div class="odp-item">
+      <div class="odp-item-icon"><i class="ti ti-router"></i></div>
+      <div class="odp-item-info">
+        <div class="odp-item-nama">${o.nama}</div>
+        <div class="odp-item-meta">${terpakai}${kap>0?'/'+kap:''} port terpakai${o.alamat?' • '+o.alamat:''}${adaLok?' • <i class="ti ti-map-pin" style="font-size:10px"></i> ada lokasi':''}</div>
+        ${kap>0?`<div class="odp-cap-bar"><div class="odp-cap-fill" style="width:${pct}%;background:${warna}"></div></div>`:''}
+      </div>
+      <button class="btn-mini" style="padding:7px 9px" onclick="bukaModalOdp(${o.id})"><i class="ti ti-pencil" style="font-size:13px"></i></button>
+      <button class="btn-mini" style="padding:7px 9px;color:#ef4444" onclick="hapusOdp(${o.id})"><i class="ti ti-trash" style="font-size:13px"></i></button>
+    </div>`;
+  }).join('');
+}
+function renderOdpDropdown(){
+  const sel=document.getElementById('f-odp');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Pilih ODP —</option>'+odpList.map(o=>`<option value="${o.id}">${o.nama}</option>`).join('');
+  sel.value=cur;
+}
+function bukaModalOdp(id){
+  editOdpId=id||null;
+  if(editOdpId){
+    const o=odpList.find(x=>x.id===editOdpId);
+    document.getElementById('odp-sheet-judul').textContent='Edit ODP';
+    document.getElementById('o-nama').value=o.nama||'';
+    document.getElementById('o-kapasitas').value=o.kapasitas||'';
+    document.getElementById('o-alamat').value=o.alamat||'';
+    document.getElementById('o-lat').value=(o.lat!=null?o.lat:'');
+    document.getElementById('o-lng').value=(o.lng!=null?o.lng:'');
+    document.getElementById('o-catatan').value=o.catatan||'';
+  }else{
+    document.getElementById('odp-sheet-judul').textContent='Tambah ODP';
+    ['o-nama','o-kapasitas','o-alamat','o-lat','o-lng','o-catatan'].forEach(i=>document.getElementById(i).value='');
+  }
+  document.getElementById('overlay-odp').classList.add('show');
+}
+function saveOdp(){
+  localStorage.setItem(lsk('odp'),JSON.stringify(odpList));
+  if(window._docRef){
+    let obj;
+    if(_tenantId==='main')obj={odpList:odpList};
+    else{obj={};obj['_tenant_'+_tenantId]={odpList:odpList};}
+    window._docRef.set(obj,{merge:true}).then(()=>setSyncStatus('ok','ODP tersimpan ✓')).catch(()=>setSyncStatus('err','Gagal sync ODP'));
+  }
+}
+function simpanOdp(){
+  const nama=document.getElementById('o-nama').value.trim();
+  const kapasitas=parseInt(document.getElementById('o-kapasitas').value)||0;
+  const alamat=document.getElementById('o-alamat').value.trim();
+  const latRaw=document.getElementById('o-lat').value.trim();
+  const lngRaw=document.getElementById('o-lng').value.trim();
+  const lat=latRaw===''?null:parseFloat(latRaw);
+  const lng=lngRaw===''?null:parseFloat(lngRaw);
+  const catatan=document.getElementById('o-catatan').value.trim();
+  if(!nama){alert('Nama ODP wajib diisi.');return;}
+  const obj={nama,kapasitas,alamat,lat,lng,catatan};
+  if(editOdpId){const idx=odpList.findIndex(x=>x.id===editOdpId);odpList[idx]={id:editOdpId,...obj};}
+  else{odpList.push({id:nextOdpId++,...obj});}
+  saveOdp();tutup('overlay-odp');renderOdp();renderOdpDropdown();
+}
+function hapusOdp(id){
+  const terpakai=jmlPelangganOdp(id);
+  if(!confirm('Hapus ODP ini?'+(terpakai>0?'\n\n'+terpakai+' pelanggan terhubung ke ODP ini, hubungan akan dilepas.':'')))return;
+  odpList=odpList.filter(o=>o.id!==id);
+  if(terpakai>0){data.forEach(d=>{if(d.odpId===id)d.odpId=0;});save();}
+  saveOdp();renderOdp();renderOdpDropdown();
+}
+function ambilGps(latEl,lngEl,infoCb){
+  if(!navigator.geolocation){alert('GPS tidak didukung perangkat ini.');return;}
+  if(infoCb)infoCb('Mengambil lokasi…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    document.getElementById(latEl).value=p.coords.latitude.toFixed(6);
+    document.getElementById(lngEl).value=p.coords.longitude.toFixed(6);
+    if(infoCb)infoCb('');
+  },err=>{alert('Gagal ambil lokasi: '+err.message);if(infoCb)infoCb('');},{enableHighAccuracy:true,timeout:10000});
+}
+function ambilGpsPelanggan(){ambilGps('f-lat','f-lng');}
+function ambilGpsOdp(){ambilGps('o-lat','o-lng');}
+
+/* ===== PILIH LOKASI DI PETA ===== */
+let _mapPick=null,_pickMarker=null,_pickTarget='',_pickLatLng=null;
+function pilihLokasiPeta(target){
+  _pickTarget=target;_pickLatLng=null;
+  const latEl=target==='odp'?'o-lat':'f-lat';
+  const lngEl=target==='odp'?'o-lng':'f-lng';
+  const cl=parseFloat(document.getElementById(latEl).value);
+  const cg=parseFloat(document.getElementById(lngEl).value);
+  document.getElementById('panel-pick-map').classList.add('show');
+  setTimeout(()=>{
+    if(!_mapPick){
+      _mapPick=L.map('map-pick').setView([isNaN(cl)?-7.25:cl,isNaN(cg)?110.0:cg],isNaN(cl)?12:16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_mapPick);
+      _mapPick.on('click',e=>{
+        _pickLatLng=e.latlng;
+        if(_pickMarker)_pickMarker.setLatLng(e.latlng);else _pickMarker=L.marker(e.latlng).addTo(_mapPick);
+        document.getElementById('pick-info').textContent='Lokasi: '+e.latlng.lat.toFixed(6)+', '+e.latlng.lng.toFixed(6);
+      });
+    }else{_mapPick.invalidateSize();_mapPick.setView([isNaN(cl)?-7.25:cl,isNaN(cg)?110.0:cg],isNaN(cl)?12:16);}
+    if(!isNaN(cl)&&!isNaN(cg)){_pickLatLng={lat:cl,lng:cg};if(_pickMarker)_pickMarker.setLatLng([cl,cg]);else _pickMarker=L.marker([cl,cg]).addTo(_mapPick);document.getElementById('pick-info').textContent='Lokasi: '+cl.toFixed(6)+', '+cg.toFixed(6);}
+    else{document.getElementById('pick-info').textContent='Ketuk peta untuk menandai lokasi…';}
+    _mapPick.invalidateSize();
+  },300);
+}
+function simpanPickLokasi(){
+  if(!_pickLatLng){alert('Ketuk lokasi di peta dulu.');return;}
+  const latEl=_pickTarget==='odp'?'o-lat':'f-lat';
+  const lngEl=_pickTarget==='odp'?'o-lng':'f-lng';
+  document.getElementById(latEl).value=_pickLatLng.lat.toFixed(6);
+  document.getElementById(lngEl).value=_pickLatLng.lng.toFixed(6);
+  tutupPanel('panel-pick-map');
+}
+
+/* ===== PETA PELANGGAN ===== */
 let _map=null;
+function statusWarna(s){return s==='lunas'?'#22c55e':(s==='hutang'?'#ef4444':'#f59e0b');}
+function pinIcon(warna){return L.divIcon({className:'',html:`<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;background:${warna};transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,iconSize:[20,20],iconAnchor:[10,20]});}
 function initPeta(){
-  if(_map)return;
   const center=[-7.25,110.0];
-  _map=L.map('map').setView(center,12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:18
-  }).addTo(_map);
-  const withAddr=data.filter(d=>d.alamat);
-  document.getElementById('peta-info').textContent=withAddr.length
-    ?withAddr.length+' pelanggan memiliki alamat (geocoding manual diperlukan untuk pin peta)'
-    :'Tambahkan alamat pelanggan agar dapat ditampilkan di peta';
+  if(!_map){
+    _map=L.map('map').setView(center,12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_map);
+  }else{_map.invalidateSize();}
+  if(_map._petaLayer)_map.removeLayer(_map._petaLayer);
+  const grp=L.featureGroup();
+  const withLoc=data.filter(d=>d.lat!=null&&d.lng!=null&&!isNaN(d.lat)&&!isNaN(d.lng));
+  withLoc.forEach(d=>{
+    const odp=odpList.find(o=>o.id===d.odpId);
+    L.marker([d.lat,d.lng],{icon:pinIcon(statusWarna(d.status))}).addTo(grp)
+      .bindPopup(`<b>${d.nama}</b><br>Status: ${d.status}<br>Tagihan: ${fRp(d.tagihan)}${odp?'<br>ODP: '+odp.nama:''}${d.hp?'<br>HP: '+d.hp:''}`);
+  });
+  grp.addTo(_map);_map._petaLayer=grp;
+  if(withLoc.length){try{_map.fitBounds(grp.getBounds().pad(0.2));}catch(e){}}
+  const withAddr=data.filter(d=>d.alamat&&(d.lat==null||d.lng==null));
+  document.getElementById('peta-info').textContent=
+    (withLoc.length?withLoc.length+' pelanggan tampil di peta. ':'Belum ada pelanggan dengan titik lokasi. ')
+    +(withAddr.length?withAddr.length+' punya alamat tapi belum ada titik GPS (edit pelanggan → atur lokasi).':'');
+  setTimeout(()=>_map.invalidateSize(),200);
+}
+
+/* ===== PETA ODP ===== */
+let _mapOdp=null;
+function initPetaOdp(){
+  const center=[-7.25,110.0];
+  if(!_mapOdp){
+    _mapOdp=L.map('map-odp').setView(center,12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_mapOdp);
+  }else{_mapOdp.invalidateSize();}
+  if(_mapOdp._layer)_mapOdp.removeLayer(_mapOdp._layer);
+  const grp=L.featureGroup();
+  const withLoc=odpList.filter(o=>o.lat!=null&&o.lng!=null&&!isNaN(o.lat)&&!isNaN(o.lng));
+  withLoc.forEach(o=>{
+    const terpakai=jmlPelangganOdp(o.id),kap=+o.kapasitas||0;
+    const warna=kap>0&&terpakai>=kap?'#ef4444':'#2563eb';
+    L.marker([o.lat,o.lng],{icon:pinIcon(warna)}).addTo(grp)
+      .bindPopup(`<b><i class="ti ti-router"></i> ${o.nama}</b><br>Port: ${terpakai}${kap>0?'/'+kap:''} terpakai${o.alamat?'<br>'+o.alamat:''}`);
+  });
+  grp.addTo(_mapOdp);_mapOdp._layer=grp;
+  if(withLoc.length){try{_mapOdp.fitBounds(grp.getBounds().pad(0.2));}catch(e){}}
+  document.getElementById('peta-odp-info').textContent=
+    withLoc.length?withLoc.length+' ODP tampil di peta.':'Belum ada ODP dengan titik lokasi. Tambah/edit ODP lalu atur lokasi.';
+  setTimeout(()=>_mapOdp.invalidateSize(),200);
 }
 
 /* ===== EXPORT EXCEL ===== */
