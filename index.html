@@ -286,6 +286,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 .wa-clear-btn{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:20px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
 #overlay-pppoe{z-index:410}
 #overlay-odp{z-index:450}
+#overlay-odp-detail{z-index:450}
 #panel-pick-map{z-index:460}
 /* LOGIN */
 #login-screen{display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0F6E56 0%,#085041 100%);align-items:center;justify-content:center;flex-direction:column;padding:24px}
@@ -981,6 +982,21 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   <div class="page-body" style="padding:0;display:flex;flex-direction:column">
     <div id="map-odp" style="width:100%;height:calc(100vh - 58px)"></div>
     <div id="peta-odp-info" style="padding:10px 16px;font-size:11px;color:var(--muted);text-align:center;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL ODP (pelanggan terkoneksi) -->
+<div class="overlay" id="overlay-odp-detail" onclick="cekOverlay(event,'overlay-odp-detail')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="odp-detail-judul">Pelanggan ODP</h2>
+      <button class="sheet-close" onclick="tutup('overlay-odp-detail')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div id="odp-detail-info" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
+      <div id="odp-detail-list"></div>
+    </div>
   </div>
 </div>
 
@@ -2916,9 +2932,9 @@ function renderOdp(){
     const warna=kap>0&&terpakai>=kap?'#ef4444':(pct>=80?'#f59e0b':'#22c55e');
     const adaLok=o.lat!=null&&o.lng!=null;
     return `<div class="odp-item">
-      <div class="odp-item-icon"><i class="ti ti-router"></i></div>
-      <div class="odp-item-info">
-        <div class="odp-item-nama">${o.nama}</div>
+      <div class="odp-item-icon" onclick="detailOdp(${o.id})" style="cursor:pointer"><i class="ti ti-router"></i></div>
+      <div class="odp-item-info" onclick="detailOdp(${o.id})" style="cursor:pointer">
+        <div class="odp-item-nama">${o.nama} <i class="ti ti-chevron-right" style="font-size:13px;color:var(--muted)"></i></div>
         <div class="odp-item-meta">${terpakai}${kap>0?'/'+kap:''} port terpakai${o.alamat?' • '+o.alamat:''}${adaLok?' • <i class="ti ti-map-pin" style="font-size:10px"></i> ada lokasi':''}</div>
         ${kap>0?`<div class="odp-cap-bar"><div class="odp-cap-fill" style="width:${pct}%;background:${warna}"></div></div>`:''}
       </div>
@@ -2926,6 +2942,33 @@ function renderOdp(){
       <button class="btn-mini" style="padding:7px 9px;color:#ef4444" onclick="hapusOdp(${o.id})"><i class="ti ti-trash" style="font-size:13px"></i></button>
     </div>`;
   }).join('');
+}
+function detailOdp(id){
+  const o=odpList.find(x=>x.id===id);
+  if(!o)return;
+  const pel=data.filter(d=>d.odpId===id);
+  const kap=+o.kapasitas||0;
+  document.getElementById('odp-detail-judul').textContent=o.nama;
+  document.getElementById('odp-detail-info').innerHTML=
+    `<i class="ti ti-plug-connected" style="font-size:12px"></i> ${pel.length}${kap>0?' / '+kap:''} port terpakai${o.alamat?' • '+o.alamat:''}`;
+  const el=document.getElementById('odp-detail-list');
+  if(!pel.length){
+    el.innerHTML='<div class="empty" style="padding:24px 0"><i class="ti ti-users"></i><p>Belum ada pelanggan terhubung ke ODP ini.</p></div>';
+  }else{
+    el.innerHTML=pel.sort((a,b)=>a.nama.localeCompare(b.nama)).map((d,i)=>{
+      const w=statusWarna(d.status);
+      const lbl=d.status==='lunas'?'Lunas':(d.status==='hutang'?'Hutang':'Belum');
+      return `<div class="odp-item" style="cursor:pointer" onclick="tutup('overlay-odp-detail');bukaModal(${d.id})">
+        <div style="width:26px;text-align:center;color:var(--muted);font-size:12px;font-weight:600">${i+1}</div>
+        <div class="odp-item-info">
+          <div class="odp-item-nama">${d.nama}</div>
+          <div class="odp-item-meta">${d.hp?'<i class=\"ti ti-phone\" style=\"font-size:10px\"></i> '+d.hp+' • ':''}Tagihan ${fRp(d.tagihan)}</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:${w};background:${w}1a;padding:3px 9px;border-radius:20px">${lbl}</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('overlay-odp-detail').classList.add('show');
 }
 function renderOdpDropdown(){
   const sel=document.getElementById('f-odp');
@@ -3077,10 +3120,14 @@ function initPetaOdp(){
   const grp=L.featureGroup();
   const withLoc=odpList.filter(o=>o.lat!=null&&o.lng!=null&&!isNaN(o.lat)&&!isNaN(o.lng));
   withLoc.forEach(o=>{
-    const terpakai=jmlPelangganOdp(o.id),kap=+o.kapasitas||0;
+    const pel=data.filter(d=>d.odpId===o.id).sort((a,b)=>a.nama.localeCompare(b.nama));
+    const terpakai=pel.length,kap=+o.kapasitas||0;
     const warna=kap>0&&terpakai>=kap?'#ef4444':'#2563eb';
+    const daftar=pel.length
+      ?'<div style="margin-top:5px;max-height:150px;overflow:auto">'+pel.map(d=>`<div style="display:flex;align-items:center;gap:5px;padding:2px 0"><span style="width:7px;height:7px;border-radius:50%;background:${statusWarna(d.status)};flex-shrink:0"></span>${d.nama}</div>`).join('')+'</div>'
+      :'<div style="margin-top:5px;color:#888">Belum ada pelanggan</div>';
     L.marker([o.lat,o.lng],{icon:pinIcon(warna)}).addTo(grp)
-      .bindPopup(`<b><i class="ti ti-router"></i> ${o.nama}</b><br>Port: ${terpakai}${kap>0?'/'+kap:''} terpakai${o.alamat?'<br>'+o.alamat:''}`);
+      .bindPopup(`<b><i class="ti ti-router"></i> ${o.nama}</b><br>Port: ${terpakai}${kap>0?'/'+kap:''} terpakai${o.alamat?'<br>'+o.alamat:''}${daftar}`,{maxHeight:240});
   });
   grp.addTo(_mapOdp);_mapOdp._layer=grp;
   if(withLoc.length){try{_mapOdp.fitBounds(grp.getBounds().pad(0.2));}catch(e){}}
