@@ -489,6 +489,10 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     </select>
     <button class="export-btn" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
   </div>
+  <div class="toolbar" style="padding-left:0;padding-right:0;margin-bottom:8px;gap:6px">
+    <button class="export-btn" onclick="bukaTutupBuku()" style="flex:1;background:#7c3aed"><i class="ti ti-calendar-check"></i> Tutup Buku Bulanan</button>
+    <button class="export-btn" onclick="bukaRiwayat()" style="flex:1;background:#0891b2"><i class="ti ti-history"></i> Riwayat Bulan</button>
+  </div>
   <div id="rekap-container"></div>
 </div>
 
@@ -507,6 +511,51 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
   <button class="bnav-item" id="bn-rekap" onclick="switchTab('rekap')"><i class="ti ti-chart-bar"></i>Rekap</button>
   <button class="bnav-item" id="bn-analisa" onclick="switchTab('analisa')"><i class="ti ti-alert-triangle"></i>Analisa</button>
 </nav>
+
+<!-- MODAL TUTUP BUKU -->
+<div class="overlay" id="overlay-tutup" onclick="cekOverlay(event,'overlay-tutup')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Tutup Buku Bulanan</h2>
+      <button class="sheet-close" onclick="tutup('overlay-tutup')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="info-box amber" style="margin-top:0">
+        <strong style="display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:12px"><i class="ti ti-info-circle"></i> Cara kerja</strong>
+        <span style="font-size:11px">Data bulan ini akan <b>diarsipkan</b> (tetap aman, bisa dilihat di Riwayat). Lalu dibuat tagihan bulan baru. Pelanggan yang <b>belum lunas / hutang</b> sisanya otomatis ditambahkan ke tagihan bulan baru sebagai <b>tunggakan</b>.</span>
+      </div>
+      <div class="fg">
+        <label>Tutup buku bulan</label>
+        <select id="tb-cur" onchange="previewTutupBuku()"></select>
+      </div>
+      <div class="fg">
+        <label>Lanjut ke bulan</label>
+        <select id="tb-next"></select>
+      </div>
+      <div class="fg">
+        <label>Tanggal jatuh tempo bulan baru</label>
+        <input type="number" id="tb-due" value="18" min="1" max="31"/>
+      </div>
+      <div id="tb-preview" class="info-box" style="background:#f1f5f9;border-color:#cbd5e1"></div>
+      <button class="btn-simpan" onclick="tutupBuku()" style="background:#7c3aed"><i class="ti ti-calendar-check"></i> Proses Tutup Buku</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RIWAYAT BULANAN -->
+<div class="overlay" id="overlay-riwayat" onclick="cekOverlay(event,'overlay-riwayat')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2>Riwayat Bulanan</h2>
+      <button class="sheet-close" onclick="tutup('overlay-riwayat')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div id="riwayat-container"></div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL PELANGGAN -->
 <div class="overlay" id="overlay" onclick="cekOverlay(event,'overlay')">
@@ -1087,6 +1136,8 @@ let data=JSON.parse(localStorage.getItem(lsk('data'))||'null')||[
   {id:13,nama:'Mursalin',hp:'',alamat:'',tagihan:0,dibayar:0,status:'belum',via:'cash',jatuhTempo:'2026-05-18',tgl:'',catatan:''},*/
 ];
 let nextId=data.length?Math.max(...data.map(d=>d.id))+1:1;
+let arsip=JSON.parse(localStorage.getItem(lsk('arsip'))||'{}');
+let periode=localStorage.getItem(lsk('periode'))||'';
 let editId=null,activeTab='data',activeSubMenu='semua',activeSmClass='a-all';
 
 /* ===== FIREBASE ===== */
@@ -1371,6 +1422,8 @@ function applyFirestoreData(val){
   if(src.authUser){_authUser=src.authUser;localStorage.setItem(lsk('auth_user'),src.authUser);}
   if(src.authPass){_authPass=src.authPass;localStorage.setItem(lsk('auth_pass'),src.authPass);}
   if(src.paketList){paketList=src.paketList;nextPaketId=paketList.length?Math.max(...paketList.map(p=>p.id))+1:1;localStorage.setItem(lsk('paket'),JSON.stringify(paketList));}
+  if(src.arsip){arsip=src.arsip;localStorage.setItem(lsk('arsip'),JSON.stringify(arsip));}
+  if(typeof src.periode==='string'&&src.periode){periode=src.periode;localStorage.setItem(lsk('periode'),periode);}
 }
 
 function fetchFromServer(){
@@ -1458,10 +1511,10 @@ function save(){
     setSyncStatus('syncing','Menyimpan...');
     let obj;
     if(_tenantId==='main'){
-      obj={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList};
+      obj={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,arsip:arsip,periode:periode};
     }else{
       obj={};
-      obj['_tenant_'+_tenantId]={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList};
+      obj['_tenant_'+_tenantId]={data:data,rekening:rekening,waTemplate:waTemplate,paketList:paketList,arsip:arsip,periode:periode};
     }
     window._docRef.set(obj,{merge:true})
       .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
@@ -1550,6 +1603,7 @@ function renderData(){
         <div class="card-field"><div class="lbl">Jatuh Tempo</div><div class="val">${jtH}</div></div>
         <div class="card-field"><div class="lbl">Tgl Bayar</div><div class="val">${fTgl(d.tgl)}</div></div>
       </div>
+      ${d.tunggakan>0?`<div class="sisa-bar" style="background:#fef2f2;border-color:#fecaca"><span class="sisa-lbl" style="color:#b91c1c"><i class="ti ti-history" style="font-size:13px"></i> Termasuk Tunggakan Bln Lalu</span><span class="sisa-val" style="color:#b91c1c">${fRp(d.tunggakan)}</span></div>`:''}
       ${d.dibayar>0&&d.dibayar<d.tagihan?`<div class="sisa-bar"><span class="sisa-lbl"><i class="ti ti-alert-circle" style="font-size:13px"></i> Sisa Tagihan</span><span class="sisa-val">${fRp(d.tagihan-d.dibayar)}</span></div>`:''}
       ${hasCat?`<div class="card-catatan"><i class="ti ti-notes" style="font-size:12px;flex-shrink:0"></i>${fb}${d.catatan?`<span>${d.catatan}</span>`:''}</div>`:''}
       ${d.ontSn?`<div class="ont-widget loading" id="ont-${d.id}">
@@ -2293,6 +2347,113 @@ function exportExcel(){
   const rr=Object.values(bd).filter(b=>b.count>0).map(b=>({'Bulan':b.bulan,'Pelanggan':b.count,'Total Tagihan':b.tagihan,'Total Masuk':b.masuk,'Belum Masuk':b.tagihan-b.masuk}));
   if(rr.length){const ws2=XLSX.utils.json_to_sheet(rr);XLSX.utils.book_append_sheet(wb,ws2,'Rekap Bulanan');}
   XLSX.writeFile(wb,'billing-wifi-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+/* ===== TUTUP BUKU BULANAN ===== */
+function labelPeriode(ym){if(!ym)return'';const p=ym.split('-');return (BULAN[parseInt(p[1])-1]||'')+' '+p[0];}
+function nextPeriode(ym){let p=ym.split('-');let y=+p[0],m=+p[1];m++;if(m>12){m=1;y++;}return y+'-'+String(m).padStart(2,'0');}
+function detectPeriode(){
+  if(periode)return periode;
+  const cnt={};data.forEach(d=>{const k=(d.jatuhTempo||d.tgl||'').slice(0,7);if(k)cnt[k]=(cnt[k]||0)+1;});
+  let best='',bestN=0;for(const k in cnt){if(cnt[k]>bestN){bestN=cnt[k];best=k;}}
+  return best||new Date().toISOString().slice(0,7);
+}
+function hitungRekap(arr){
+  const tagihan=arr.reduce((s,d)=>s+(+d.tagihan||0),0);
+  const masuk=arr.reduce((s,d)=>s+(+d.dibayar||0),0);
+  const lunas=arr.filter(d=>d.status==='lunas').length;
+  return {jumlah:arr.length,tagihan,masuk,belum:tagihan-masuk,lunas};
+}
+function bukaTutupBuku(){
+  const cur=detectPeriode();
+  const selCur=document.getElementById('tb-cur');
+  const selNext=document.getElementById('tb-next');
+  // bangun pilihan bulan (dari cur-2 sampai cur+2)
+  function opts(sel,base,sels){
+    let html='';let p=base.split('-');let y=+p[0],m=+p[1];
+    for(let i=-2;i<=3;i++){let yy=y,mm=m+i;while(mm<1){mm+=12;yy--;}while(mm>12){mm-=12;yy++;}const ym=yy+'-'+String(mm).padStart(2,'0');html+=`<option value="${ym}" ${ym===sels?'selected':''}>${labelPeriode(ym)}</option>`;}
+    sel.innerHTML=html;
+  }
+  opts(selCur,cur,cur);
+  opts(selNext,cur,nextPeriode(cur));
+  previewTutupBuku();
+  document.getElementById('overlay-tutup').classList.add('show');
+}
+function previewTutupBuku(){
+  const cur=document.getElementById('tb-cur').value;
+  let totKurang=0,nHutang=0;
+  data.forEach(d=>{const k=d.status==='lunas'?0:Math.max(0,(+d.tagihan||0)-(+d.dibayar||0));if(k>0){totKurang+=k;nHutang++;}});
+  document.getElementById('tb-preview').innerHTML=`<div style="font-size:12px;line-height:1.6">
+    <b>${data.length}</b> pelanggan akan diarsipkan ke <b>${labelPeriode(cur)}</b>.<br>
+    <b>${nHutang}</b> pelanggan punya tunggakan, total <b style="color:#b91c1c">${fRp(totKurang)}</b> akan ditambahkan ke tagihan bulan baru.</div>`;
+}
+function tutupBuku(){
+  const cur=document.getElementById('tb-cur').value;
+  const nxt=document.getElementById('tb-next').value;
+  const due=Math.min(31,Math.max(1,parseInt(document.getElementById('tb-due').value)||18));
+  if(!cur||!nxt){alert('Periode tidak valid.');return;}
+  if(!data.length){alert('Belum ada data pelanggan.');return;}
+  if(arsip[cur]&&!confirm('Bulan '+labelPeriode(cur)+' sudah pernah diarsip. Timpa arsip lama?'))return;
+  if(!confirm('Tutup buku '+labelPeriode(cur)+' dan mulai '+labelPeriode(nxt)+'?\n\nData '+labelPeriode(cur)+' akan disimpan di Riwayat. Tindakan ini mengganti tagihan berjalan dengan bulan baru.'))return;
+  // 1) arsipkan snapshot bulan ini
+  const snap=JSON.parse(JSON.stringify(data));
+  arsip[cur]={label:labelPeriode(cur),key:cur,closedAt:new Date().toISOString().slice(0,10),data:snap,rekap:hitungRekap(snap)};
+  // 2) bangun tagihan bulan baru dengan carryover tunggakan
+  const np=nxt.split('-');const newJT=`${np[0]}-${np[1]}-${String(due).padStart(2,'0')}`;
+  data=data.map(d=>{
+    const iuran=(typeof d.iuran==='number'&&d.iuran>0)?d.iuran:Math.max(0,(+d.tagihan||0)-(+d.tunggakan||0));
+    const kurang=d.status==='lunas'?0:Math.max(0,(+d.tagihan||0)-(+d.dibayar||0));
+    const tunggakan=kurang>0?kurang:0;
+    const tagihan=iuran+tunggakan;
+    return {id:d.id,nama:d.nama,hp:d.hp||'',alamat:d.alamat||'',koneksi:d.koneksi||'pppoe',ontSn:d.ontSn||'',
+      iuran:iuran,tunggakan:tunggakan,tagihan:tagihan,dibayar:0,
+      status:tunggakan>0?'hutang':'belum',via:d.via||'cash',
+      jatuhTempo:newJT,tgl:'',catatan:tunggakan>0?('Tunggakan '+labelPeriode(cur)+': '+fRp(tunggakan)):''};
+  });
+  periode=nxt;
+  localStorage.setItem(lsk('arsip'),JSON.stringify(arsip));
+  localStorage.setItem(lsk('periode'),periode);
+  save();
+  tutup('overlay-tutup');
+  renderData();
+  if(activeTab==='rekap')renderRekap();
+  if(activeTab==='analisa')renderAnalisa();
+  alert('✅ Tutup buku '+labelPeriode(cur)+' selesai!\n\nBulan '+labelPeriode(nxt)+' siap ditagih. Tunggakan otomatis masuk ke tagihan. Lihat data lama di tombol "Riwayat Bulan".');
+}
+function bukaRiwayat(){renderRiwayat();document.getElementById('overlay-riwayat').classList.add('show');}
+function renderRiwayat(){
+  const keys=Object.keys(arsip).sort().reverse();
+  const c=document.getElementById('riwayat-container');
+  if(!keys.length){c.innerHTML='<div class="empty"><i class="ti ti-history"></i><p>Belum ada bulan yang diarsip.<br>Gunakan tombol "Tutup Buku Bulanan".</p></div>';return;}
+  c.innerHTML=keys.map(k=>{const a=arsip[k];const r=a.rekap||{};return `<div class="plg-card">
+    <div class="card-head"><div><div class="card-nama">${a.label}</div><div class="card-hp">${r.jumlah||0} pelanggan • ditutup ${fTgl(a.closedAt)}</div></div>
+      <div class="card-badges"><span class="badge b-lunas">${r.lunas||0} Lunas</span></div></div>
+    <div class="card-body">
+      <div class="card-field"><div class="lbl">Total Tagihan</div><div class="val">${fRp(r.tagihan||0)}</div></div>
+      <div class="card-field"><div class="lbl">Uang Masuk</div><div class="val" style="color:#16a34a;font-weight:600">${fRp(r.masuk||0)}</div></div>
+      <div class="card-field"><div class="lbl">Belum Masuk</div><div class="val" style="color:#dc2626;font-weight:600">${fRp(r.belum||0)}</div></div>
+      <div class="card-field"><div class="lbl">Pelanggan</div><div class="val">${r.jumlah||0}</div></div>
+    </div>
+    <div class="card-actions">
+      <button class="btn-struk" onclick="exportArsip('${k}')"><i class="ti ti-file-spreadsheet" style="font-size:12px"></i> Export Excel</button>
+      <button class="act-btn act-hapus" onclick="hapusArsip('${k}')"><i class="ti ti-trash" style="font-size:12px"></i></button>
+    </div></div>`;}).join('');
+}
+function exportArsip(k){
+  if(typeof XLSX==='undefined'){alert('Library belum siap.');return;}
+  const a=arsip[k];if(!a)return;
+  const lbl={lunas:'Lunas',belum:'Belum Bayar',hutang:'Hutang'};
+  const rows=a.data.map(d=>({'Nama':d.nama,'HP':d.hp||'','Alamat':d.alamat||'','Iuran':d.iuran||(d.tagihan-(d.tunggakan||0)),'Tunggakan':d.tunggakan||0,'Tagihan':d.tagihan,'Dibayar':d.dibayar,'Kekurangan':d.tagihan-d.dibayar,'Via':d.via==='cash'?'Cash':'Transfer','Status':lbl[d.status]||d.status,'Jatuh Tempo':d.jatuhTempo||'','Tgl Bayar':d.tgl||'','Catatan':d.catatan||''}));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:14},{wch:22},{wch:11},{wch:11},{wch:12},{wch:11},{wch:11},{wch:9},{wch:12},{wch:12},{wch:12},{wch:30}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,a.label);
+  XLSX.writeFile(wb,'billing-wifi-'+k+'.xlsx');
+}
+function hapusArsip(k){
+  if(!confirm('Hapus arsip bulan '+(arsip[k]?arsip[k].label:k)+'? Tidak bisa dikembalikan.'))return;
+  delete arsip[k];
+  localStorage.setItem(lsk('arsip'),JSON.stringify(arsip));
+  save();renderRiwayat();
 }
 
 /* BATALKAN LUNAS */
