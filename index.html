@@ -3006,7 +3006,7 @@ function pilihLokasiPeta(target){
   setTimeout(()=>{
     if(!_mapPick){
       _mapPick=L.map('map-pick').setView([isNaN(cl)?-7.25:cl,isNaN(cg)?110.0:cg],isNaN(cl)?12:16);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_mapPick);
+      pasangBaseLayer(_mapPick);
       _mapPick.on('click',e=>{
         _pickLatLng=e.latlng;
         if(_pickMarker)_pickMarker.setLatLng(e.latlng);else _pickMarker=L.marker(e.latlng).addTo(_mapPick);
@@ -3027,6 +3027,17 @@ function simpanPickLokasi(){
   tutupPanel('panel-pick-map');
 }
 
+/* ===== BASE LAYER PETA (Google Satelit / Jalan) ===== */
+function pasangBaseLayer(map){
+  // Citra satelit Google (mode hybrid: satelit + nama jalan) — tampilan ala Google Earth
+  const satelit=L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{
+    subdomains:['0','1','2','3'],maxZoom:21,attribution:'Imagery © Google'});
+  const jalan=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>'});
+  satelit.addTo(map); // default: satelit
+  L.control.layers({'🛰️ Satelit':satelit,'🗺️ Jalan':jalan},null,{position:'topright',collapsed:false}).addTo(map);
+}
+
 /* ===== PETA PELANGGAN ===== */
 let _map=null;
 function statusWarna(s){return s==='lunas'?'#22c55e':(s==='hutang'?'#ef4444':'#f59e0b');}
@@ -3035,7 +3046,7 @@ function initPeta(){
   const center=[-7.25,110.0];
   if(!_map){
     _map=L.map('map').setView(center,12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_map);
+    pasangBaseLayer(_map);
   }else{_map.invalidateSize();}
   if(_map._petaLayer)_map.removeLayer(_map._petaLayer);
   const grp=L.featureGroup();
@@ -3060,7 +3071,7 @@ function initPetaOdp(){
   const center=[-7.25,110.0];
   if(!_mapOdp){
     _mapOdp=L.map('map-odp').setView(center,12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_mapOdp);
+    pasangBaseLayer(_mapOdp);
   }else{_mapOdp.invalidateSize();}
   if(_mapOdp._layer)_mapOdp.removeLayer(_mapOdp._layer);
   const grp=L.featureGroup();
