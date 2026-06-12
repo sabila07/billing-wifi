@@ -7,11 +7,11 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Iuran WiFi"/>
+<meta name="apple-mobile-web-app-title" content="Core.id"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <link rel="icon" type="image/png" href="icons/icon-192.png"/>
-<title>Iuran WiFi</title>
+<title>Core.id</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -389,7 +389,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo"><i class="ti ti-wifi"></i><span>IURAN WIFI</span></div>
+    <div class="login-logo"><i class="ti ti-wifi"></i><span>CORE.ID</span></div>
     <div class="login-title" id="login-title">Selamat Datang</div>
     <div class="login-sub" id="login-sub">Masukkan username dan password untuk melanjutkan</div>
     <div class="login-field"><label>Username</label><input id="login-user" type="text" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"/></div>
@@ -438,7 +438,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
       <button class="admin-save-btn" onclick="simpanTenantBaru()"><i class="ti ti-check"></i> Simpan User Baru</button>
     </div>
   </div>
-  <div style="text-align:center;color:rgba(255,255,255,.25);font-size:11px;margin-top:20px;padding-bottom:40px">IURAN WIFI — Multi-User System</div>
+  <div style="text-align:center;color:rgba(255,255,255,.25);font-size:11px;margin-top:20px;padding-bottom:40px">CORE.ID — Multi-User System</div>
 </div>
 
 <!-- ADMIN VIEWING TENANT BANNER -->
@@ -450,7 +450,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div class="topbar">
   <div class="topbar-title" onclick="bukaHomeMenu()" style="cursor:pointer">
     <i class="ti ti-home"></i>
-    <div><h1>IURAN WIFI</h1><div class="topbar-sub">Kelola iuran pelanggan</div></div>
+    <div><h1>CORE.ID</h1><div class="topbar-sub">Kelola iuran pelanggan</div></div>
   </div>
   <div class="topbar-btns">
     <div id="sync-dot" title="Status sync"></div>
@@ -1944,7 +1944,7 @@ td:first-child{width:76px;color:#666}td:nth-child(2){width:8px;color:#666}
 .ft{text-align:center;font-size:9px;color:#777;margin-top:6px;line-height:1.6}
 @media print{body{width:58mm;padding:3px}@page{size:58mm auto;margin:0}}
 </style></head><body>
-<div class="c"><div class="logo">&#x1F4F6; IURAN WIFI</div><div class="sub">Bukti Pembayaran Internet</div></div>
+<div class="c"><div class="logo">&#x1F4F6; CORE.ID</div><div class="sub">Bukti Pembayaran Internet</div></div>
 <hr class="s"/>
 <table>
 <tr><td>No. Struk</td><td>:</td><td>${noDoc}</td></tr>
@@ -1970,7 +1970,7 @@ ${d.catatan?`<tr><td colspan="3" style="font-style:italic;color:#555;font-size:1
 <hr class="d"/>
 <div class="sb" style="color:${statusColor};border-color:${statusColor}">${statusLabel}</div>
 <hr class="d"/>
-<div class="ft">Terima kasih atas pembayaran Anda<br/>Simpan struk sebagai bukti pembayaran<br/><strong>— IURAN WIFI —</strong></div>
+<div class="ft">Terima kasih atas pembayaran Anda<br/>Simpan struk sebagai bukti pembayaran<br/><strong>— CORE.ID —</strong></div>
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`;
   _openWin(html,340,580);
@@ -2012,7 +2012,7 @@ table.detail tbody td{padding:10px 14px;font-size:13px;vertical-align:top}
 @media print{body{padding:16px 20px}@page{size:A4;margin:10mm}}
 </style></head><body>
 <div class="header">
-  <div><div class="brand-name">&#x1F4F6; IURAN WIFI</div><div class="brand-sub">Layanan Internet Mandiri</div></div>
+  <div><div class="brand-name">&#x1F4F6; CORE.ID</div><div class="brand-sub">Layanan Internet Mandiri</div></div>
   <div class="inv-title">
     <h2>INVOICE</h2>
     <div class="inv-no">No: ${noDoc}</div>
@@ -2061,7 +2061,7 @@ ${d.via==='transfer'&&rekInfo?`<div class="rekening-box"><h4>Informasi Rekening 
 <div class="footer">
   Dokumen ini dicetak pada ${tglCetak} pukul ${jamCetak}<br/>
   Invoice ini merupakan bukti pembayaran yang sah<br/>
-  <strong>IURAN WIFI</strong> — Terima kasih atas kepercayaan Anda
+  <strong>CORE.ID</strong> — Terima kasih atas kepercayaan Anda
 </div>
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`;

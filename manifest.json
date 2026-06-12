@@ -1,6 +1,6 @@
 {
-  "name": "IURAN WIFI",
-  "short_name": "Iuran WiFi",
+  "name": "Core.id",
+  "short_name": "Core.id",
   "description": "Aplikasi tagihan & billing pelanggan WiFi RT/RW Net",
   "id": "/billing-wifi/",
   "start_url": "./",
