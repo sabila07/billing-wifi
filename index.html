@@ -758,6 +758,7 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
     <div class="hmenu-auth">
       <button class="hmenu-auth-btn" style="background:var(--blue-l);color:var(--blue-d)" onclick="bukaGantiPassword();tutupHomeMenu()"><i class="ti ti-lock" style="font-size:14px"></i> Ganti Password</button>
       <button class="hmenu-auth-btn" style="background:#f0f9ff;color:#0369a1" onclick="bukaOLTSetting();tutupHomeMenu()"><i class="ti ti-router" style="font-size:14px"></i> Setting OLT</button>
+      <button class="hmenu-auth-btn" style="background:#fff7ed;color:#9a3412" onclick="pulihkanBackup();tutupHomeMenu()"><i class="ti ti-history" style="font-size:14px"></i> Pulihkan dari Backup Lokal</button>
       <button class="hmenu-auth-btn" style="background:var(--red-l);color:var(--red-d)" onclick="logout()"><i class="ti ti-logout" style="font-size:14px"></i> Keluar</button>
     </div>
   </div>
@@ -1675,6 +1676,25 @@ function save(){
       .then(()=>{fbReady=true;setSyncStatus('ok','Tersimpan ✓');})
       .catch(()=>{setSyncStatus('err','Gagal simpan — coba lagi');if(!fbReady)scheduleRetry();});
   }
+}
+function pulihkanBackup(){
+  let raw;
+  try{raw=localStorage.getItem(lsk('data_backup'));}catch(e){raw=null;}
+  if(!raw){alert('Tidak ada backup lokal ditemukan di perangkat/browser ini.\n\nBackup hanya tersimpan di perangkat tempat data terakhir kali berhasil disimpan.');return;}
+  let backup;
+  try{backup=JSON.parse(raw);}catch(e){alert('Backup lokal rusak/tidak terbaca.');return;}
+  if(!backup||!Array.isArray(backup.data)||!backup.data.length){alert('Backup lokal kosong, tidak ada yang bisa dipulihkan.');return;}
+  const waktu=backup.t?new Date(backup.t).toLocaleString('id-ID'):'tidak diketahui';
+  const ok=confirm('Backup ditemukan di perangkat ini:\n'+backup.data.length+' pelanggan, tersimpan pada '+waktu+'.\n\nData pelanggan saat ini: '+data.length+'.\n\nPulihkan dari backup ini? Data saat ini akan DIGANTI dengan isi backup.');
+  if(!ok)return;
+  data=backup.data;
+  _dataGuardCount=data.length;
+  nextId=data.length?Math.max(...data.map(d=>d.id))+1:1;
+  save();
+  renderData();
+  if(activeTab==='rekap')renderRekap();
+  if(activeTab==='analisa')renderAnalisa();
+  alert('✅ '+data.length+' data pelanggan berhasil dipulihkan dari backup lokal.');
 }
 function fRp(n){return'Rp '+Number(n).toLocaleString('id-ID')}
 function fTgl(t){if(!t)return'—';const[y,m,d]=t.split('-');return d+'/'+m+'/'+y}
