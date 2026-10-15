@@ -488,6 +488,8 @@ body{max-width:480px;margin:0 auto;display:flex;flex-direction:column}
 <div class="panel show" id="panel-data">
   <div class="toolbar">
     <input type="text" id="cari" placeholder="Cari nama, HP, alamat..." oninput="renderData()"/>
+    <button type="button" id="btn-import-pelanggan" onclick="document.getElementById('file-import-pelanggan').click()">Impor pelanggan</button>
+    <input type="file" id="file-import-pelanggan" accept=".json,application/json" style="display:none" onchange="importPelangganFile(this)">
     <select id="fs" onchange="renderData()">
       <option value="">Semua bulan</option>
       <option value="2026-03">Mar 2026</option>
@@ -1726,6 +1728,43 @@ function renderRekening(){
 }
 
 /* RENDER DATA */
+async function importPelangganFile(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  try {
+    const incoming = JSON.parse(await file.text());
+    if (!Array.isArray(incoming) || incoming.length !== 185 ||
+        incoming.some(x => !x || typeof x !== 'object' || !x.nama)) {
+      alert('File tidak sesuai. Pilih pelanggan-import.json yang berisi 185 pelanggan.');
+      return;
+    }
+
+    const ids = incoming.map(x => String(x.id));
+    if (new Set(ids).size !== incoming.length) {
+      alert('Impor dibatalkan: ID pelanggan ada yang duplikat.');
+      return;
+    }
+
+    if (!confirm('Akan mengganti daftar pelanggan saat ini dengan 185 pelanggan dari file. Data lama dicadangkan di perangkat. Setelah disimpan, daftar cloud juga akan berubah. Lanjutkan?')) return;
+
+    localStorage.setItem(lsk('data_pre_import'), JSON.stringify({
+      t: Date.now(), n: data.length, data: data
+    }));
+
+    data = incoming;
+    _dataGuardCount = data.length;
+    nextId = Math.max(0, ...data.map(x => Number(x.id) || 0)) + 1;
+    save();
+    renderData();
+    alert('Daftar 185 pelanggan sudah diimpor. Periksa status sinkronisasi sebelum melanjutkan.');
+  } catch (e) {
+    alert('Impor gagal: ' + e.message);
+  } finally {
+    input.value = '';
+  }
+}
+
 function renderData(){
   const cari=document.getElementById('cari').value.toLowerCase();
   const fBulan=document.getElementById('fs').value;
