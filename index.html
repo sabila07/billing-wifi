@@ -2819,7 +2819,6 @@ function konfirmasiBayar(){
 // Auto-reset localStorage jika versi data berubah (pindah bulan)
 const DATA_VERSION='mei-2026-v1';
 if(localStorage.getItem(lsk('version'))!==DATA_VERSION){
-  localStorage.removeItem(lsk('data'));
   localStorage.setItem(lsk('version'),DATA_VERSION);
 }
 
